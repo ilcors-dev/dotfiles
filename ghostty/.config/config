@@ -1,0 +1,20 @@
+theme = light:CLRS,dark:Vercel
+
+font-family = "FiraCode Nerd Font Mono"
+font-style = Reg
+font-size = 16
+font-thicken = true
+
+adjust-cursor-thickness = 4
+shell-integration-features = no-cursor
+
+window-inherit-font-size = false
+
+custom-shader = shaders/cursor_warp.glsl
+
+background-opacity = 0.9
+
+# background-image = /Users/ilcors-dev/corsetti.luca28@gmail.com - Google Drive/My Drive/Wallpapers/art/Cole_Thomas_The_Consummation_The_Course_of_the_Empire_1836.jpg
+# background-image-opacity = 0.8
+# background-image-fit = cover
+# background-image-position = center
