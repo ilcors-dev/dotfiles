@@ -5,7 +5,6 @@ eval "$(starship init zsh)"
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#fff,bg=cyan,bold,underline"
-source <(COMPLETE=zsh jj)
 
 if [ -f "$HOME/google-cloud-sdk/path.zsh.inc" ]; then
   . "$HOME/google-cloud-sdk/path.zsh.inc"
