@@ -2,6 +2,8 @@
 
 Managed using GNU stow.
 
+Run `bootstrap.sh` to bootstrap base stuff and then:
+
 ```bash
 brew install stow
 ```
