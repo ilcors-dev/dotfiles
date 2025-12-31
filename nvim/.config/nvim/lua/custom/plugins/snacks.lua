@@ -19,9 +19,9 @@ return {
 		{
 			"<leader>ot",
 			function()
-				Snacks.terminal.toggle()
+				Snacks.terminal.open()
 			end,
-			desc = "[O]pen: Toggle Terminal",
+			desc = "[O]pen Terminal",
 		},
 		{
 			"<leader>ol",
