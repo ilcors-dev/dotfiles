@@ -42,6 +42,12 @@ end
 
 ---@param num number Terminal number (1-5)
 function M.create_terminal(num)
+	local current_buf = vim.api.nvim_get_current_buf()
+
+	if current_buf ~= "terminal" then
+		M.last_editor_buf = current_buf
+	end
+
 	local term = M.terminals[num]
 
 	local buf = vim.api.nvim_create_buf(false, true)
@@ -56,6 +62,10 @@ function M.create_terminal(num)
 		term = true,
 	})
 
+	vim.schedule(function()
+		vim.cmd.startinsert()
+	end)
+
 	term.buf = buf
 	term.created = true
 end
@@ -64,7 +74,7 @@ function M.switch_to_editor()
 	if M.last_editor_buf and vim.api.nvim_buf_is_valid(M.last_editor_buf) then
 		vim.api.nvim_set_current_buf(M.last_editor_buf)
 	else
-		vim.notify("No editor buffer found", vim.log.levels.WARN)
+		vim.notify("No valid editor buffer to switch to.", vim.log.levels.WARN)
 	end
 end
 
@@ -135,7 +145,6 @@ function M._setup_autocommands()
 			if buftype == "terminal" then
 				M._in_terminal_mode = true
 				M._last_terminal_buf = buf
-				vim.cmd.startinsert()
 			else
 				if M._in_terminal_mode then
 					if M._last_terminal_buf and vim.api.nvim_buf_is_valid(M._last_terminal_buf) then
@@ -144,8 +153,6 @@ function M._setup_autocommands()
 
 					M._in_terminal_mode = false
 				end
-
-				M.last_editor_buf = buf
 			end
 		end,
 	})
