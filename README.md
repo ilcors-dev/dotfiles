@@ -8,14 +8,21 @@ Run `bootstrap.sh` to bootstrap base stuff and then:
 brew install stow
 ```
 
-To STOW, run from the root of this folder
+To STOW user dotfiles, run from the root of this folder
 
 ```bash
-stow -vv -t ~ */
+stow -vv -t ~ nvim zsh ghostty starship lazygit
+```
+
+To STOW system keyboard layouts (requires sudo)
+
+```bash
+sudo stow -vv -d "$HOME/src/dotfiles" -t "/Library/Keyboard Layouts" keyboard-layouts
 ```
 
 To UNSTOW
 
 ```bash
-stow -vv -t ~ -D */
+stow -vv -t ~ -D nvim zsh ghostty starship lazygit
+sudo stow -vv -d "$HOME/src/dotfiles" -t "/Library/Keyboard Layouts" -D keyboard-layouts
 ```
