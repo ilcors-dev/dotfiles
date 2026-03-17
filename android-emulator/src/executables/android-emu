@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SDK_ROOT="${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}"
+EMULATOR_BIN="$SDK_ROOT/emulator/emulator"
+GPU_MODE="${ANDROID_EMU_GPU:-host}"
+
+usage() {
+  cat <<'EOF'
+Usage: android-emu [avd-name] [-- emulator-args...]
+
+Environment variables:
+  ANDROID_SDK_ROOT   Android SDK root (default: $HOME/Library/Android/sdk)
+  ANDROID_EMU_AVD    Default AVD name when not passed as first argument
+  ANDROID_EMU_GPU    GPU mode (default: host, fallback: swiftshader_indirect)
+
+Examples:
+  android-emu
+  android-emu testphone
+  ANDROID_EMU_GPU=swiftshader_indirect android-emu
+  android-emu testphone -- -no-snapshot-load
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ ! -x "$EMULATOR_BIN" ]]; then
+  echo "error: emulator binary not found at: $EMULATOR_BIN" >&2
+  exit 1
+fi
+
+avd_name="${ANDROID_EMU_AVD:-}"
+if [[ $# -gt 0 && "${1:-}" != "--" ]]; then
+  avd_name="$1"
+  shift
+fi
+
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
+
+if [[ -z "$avd_name" ]]; then
+  avd_name="$($EMULATOR_BIN -list-avds | /usr/bin/head -n 1)"
+fi
+
+if [[ -z "$avd_name" ]]; then
+  echo "error: no AVD found. create one first with avdmanager." >&2
+  exit 1
+fi
+
+avd_config="$HOME/.android/avd/${avd_name}.avd/config.ini"
+if [[ ! -f "$avd_config" ]]; then
+  echo "error: AVD config missing: $avd_config" >&2
+  exit 1
+fi
+
+upsert_ini() {
+  local key="$1"
+  local value="$2"
+  local file="$3"
+  if /usr/bin/grep -q "^${key}=" "$file"; then
+    /usr/bin/sed -i '' "s|^${key}=.*|${key}=${value}|" "$file"
+  else
+    printf '%s=%s\n' "$key" "$value" >> "$file"
+  fi
+}
+
+upsert_ini "hw.keyboard" "yes" "$avd_config"
+upsert_ini "hw.gpu.enabled" "yes" "$avd_config"
+upsert_ini "hw.gpu.mode" "$GPU_MODE" "$avd_config"
+
+exec "$EMULATOR_BIN" "@$avd_name" -gpu "$GPU_MODE" "$@"

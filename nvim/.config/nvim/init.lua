@@ -174,6 +174,10 @@ vim.o.tabstop = 2
 vim.o.softtabstop = 2
 vim.o.shiftwidth = 2
 
+vim.filetype.add({
+	extension = { tex = "tex" },
+})
+
 local function find_venv()
 	local venv = vim.fn.getcwd() .. "/.venv/bin/python"
 	if vim.fn.executable(venv) == 1 then
