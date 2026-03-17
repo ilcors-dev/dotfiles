@@ -45,3 +45,5 @@ export PATH="/Library/TeX/texbin:$PATH"
 export PATH="$HOME/src/executables:$PATH"
 
 # zprof
+export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools"

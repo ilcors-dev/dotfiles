@@ -1,0 +1,239 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SDK_ROOT="${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}"
+API_LEVEL="36"
+AVD_NAME="testphone"
+DEVICE_PROFILE="pixel_8"
+SYSIMG_FLAVOR="google_apis"
+SYSIMG_ABI="arm64-v8a"
+CREATE_AVD="yes"
+RECREATE_AVD="no"
+PINNED_CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-mac-14742923_latest.zip"
+CMDLINE_TOOLS_URL=""
+
+usage() {
+  cat <<'EOF'
+Usage: android-emu-setup [options]
+
+Minimal Android emulator setup for macOS without Android Studio.
+
+Options:
+  --api <level>                  Android API level (default: 36)
+  --avd-name <name>              AVD name to create (default: testphone)
+  --device <id>                  avdmanager device id (default: pixel_8)
+  --sysimg-flavor <flavor>       System image flavor (default: google_apis)
+  --abi <abi>                    System image ABI (default: arm64-v8a)
+  --sdk-root <path>              SDK root path (default: ~/Library/Android/sdk)
+  --cmdline-tools-url <url>      Override command-line tools URL
+  --recreate-avd                 Recreate AVD even when it already exists
+  --no-avd                       Install tools/packages only, skip AVD creation
+  -h, --help                     Show this help message
+
+Environment variables:
+  ANDROID_SDK_ROOT               SDK root override
+
+Examples:
+  android-emu-setup
+  android-emu-setup --device pixel_8
+  android-emu-setup --avd-name pixeltest --api 36
+  android-emu-setup --no-avd
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --api)
+      API_LEVEL="$2"
+      shift 2
+      ;;
+    --avd-name)
+      AVD_NAME="$2"
+      shift 2
+      ;;
+    --device)
+      DEVICE_PROFILE="$2"
+      shift 2
+      ;;
+    --sysimg-flavor)
+      SYSIMG_FLAVOR="$2"
+      shift 2
+      ;;
+    --abi)
+      SYSIMG_ABI="$2"
+      shift 2
+      ;;
+    --sdk-root)
+      SDK_ROOT="$2"
+      shift 2
+      ;;
+    --cmdline-tools-url)
+      CMDLINE_TOOLS_URL="$2"
+      shift 2
+      ;;
+    --recreate-avd)
+      RECREATE_AVD="yes"
+      shift
+      ;;
+    --no-avd)
+      CREATE_AVD="no"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "error: unknown option: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+require_cmd() {
+  local cmd="$1"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "error: missing required command: $cmd" >&2
+    exit 1
+  fi
+}
+
+resolve_latest_cmdline_tools_url() {
+  /usr/bin/python3 - <<'PY'
+import urllib.request
+import xml.etree.ElementTree as ET
+
+REPO_URL = "https://dl.google.com/android/repository/repository2-1.xml"
+BASE = "https://dl.google.com/android/repository/"
+
+try:
+    data = urllib.request.urlopen(REPO_URL, timeout=30).read()
+    root = ET.fromstring(data)
+except Exception:
+    print("")
+    raise SystemExit(0)
+
+best = None
+best_rev = (-1, -1, -1)
+
+for rp in root.findall("remotePackage"):
+    path = rp.attrib.get("path", "")
+    if not path.startswith("cmdline-tools;"):
+        continue
+
+    rev = rp.find("revision")
+    if rev is None:
+        continue
+    cur = (
+        int(rev.findtext("major", "0")),
+        int(rev.findtext("minor", "0")),
+        int(rev.findtext("micro", "0")),
+    )
+
+    archives = rp.find("archives")
+    if archives is None:
+        continue
+
+    rel_url = None
+    for archive in archives.findall("archive"):
+      if archive.findtext("host-os", "") != "macosx":
+          continue
+      rel_url = archive.findtext("complete/url", "")
+      if rel_url:
+          break
+
+    if rel_url and cur > best_rev:
+        best_rev = cur
+        best = BASE + rel_url
+
+print(best or "")
+PY
+}
+
+require_cmd curl
+require_cmd unzip
+require_cmd /usr/bin/python3
+require_cmd java
+
+mkdir -p "$SDK_ROOT" "$SDK_ROOT/cmdline-tools" "$HOME/.android"
+touch "$HOME/.android/repositories.cfg"
+
+if [[ -z "$CMDLINE_TOOLS_URL" ]]; then
+  CMDLINE_TOOLS_URL="$(resolve_latest_cmdline_tools_url || true)"
+fi
+if [[ -z "$CMDLINE_TOOLS_URL" ]]; then
+  CMDLINE_TOOLS_URL="$PINNED_CMDLINE_TOOLS_URL"
+fi
+
+SDKMANAGER_BIN="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+AVDMANAGER_BIN="$SDK_ROOT/cmdline-tools/latest/bin/avdmanager"
+
+if [[ ! -x "$SDKMANAGER_BIN" ]]; then
+  echo "Installing Android command-line tools..."
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' EXIT
+
+  curl -fL "$CMDLINE_TOOLS_URL" -o "$tmp_dir/commandlinetools.zip"
+  unzip -q "$tmp_dir/commandlinetools.zip" -d "$tmp_dir/unpack"
+
+  rm -rf "$SDK_ROOT/cmdline-tools/latest"
+  mkdir -p "$SDK_ROOT/cmdline-tools/latest"
+  mv "$tmp_dir/unpack/cmdline-tools"/* "$SDK_ROOT/cmdline-tools/latest/"
+
+  trap - EXIT
+  rm -rf "$tmp_dir"
+else
+  echo "Android command-line tools already present at $SDKMANAGER_BIN"
+fi
+
+if [[ ! -x "$SDKMANAGER_BIN" || ! -x "$AVDMANAGER_BIN" ]]; then
+  echo "error: command-line tools installation is incomplete" >&2
+  exit 1
+fi
+
+echo "Accepting Android SDK licenses..."
+yes | "$SDKMANAGER_BIN" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+
+SYSTEM_IMAGE="system-images;android-${API_LEVEL};${SYSIMG_FLAVOR};${SYSIMG_ABI}"
+echo "Installing SDK packages..."
+"$SDKMANAGER_BIN" --sdk_root="$SDK_ROOT" --install \
+  "platform-tools" \
+  "emulator" \
+  "platforms;android-${API_LEVEL}" \
+  "$SYSTEM_IMAGE"
+
+if [[ "$CREATE_AVD" == "yes" ]]; then
+  emulator_bin="$SDK_ROOT/emulator/emulator"
+  if [[ ! -x "$emulator_bin" ]]; then
+    echo "error: emulator binary missing after install: $emulator_bin" >&2
+    exit 1
+  fi
+
+  if "$emulator_bin" -list-avds | /usr/bin/grep -qx "$AVD_NAME"; then
+    if [[ "$RECREATE_AVD" == "yes" ]]; then
+      echo "Recreating AVD '$AVD_NAME' with device profile '$DEVICE_PROFILE'..."
+      printf 'no\n' | "$AVDMANAGER_BIN" create avd --force --name "$AVD_NAME" --package "$SYSTEM_IMAGE" --device "$DEVICE_PROFILE"
+    else
+      echo "AVD '$AVD_NAME' already exists"
+    fi
+  else
+    echo "Creating AVD '$AVD_NAME' with device profile '$DEVICE_PROFILE'..."
+    printf 'no\n' | "$AVDMANAGER_BIN" create avd --force --name "$AVD_NAME" --package "$SYSTEM_IMAGE" --device "$DEVICE_PROFILE"
+  fi
+fi
+
+cat <<EOF
+
+Done.
+
+SDK root: $SDK_ROOT
+API level: $API_LEVEL
+AVD name: $AVD_NAME
+Device profile: $DEVICE_PROFILE
+
+Next steps:
+  1) Ensure dotfiles package is stowed: stow -vv -t ~ android-emulator
+  2) Start emulator: android-emu $AVD_NAME
+EOF
