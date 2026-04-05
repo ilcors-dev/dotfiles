@@ -178,21 +178,6 @@ vim.filetype.add({
 	extension = { tex = "tex" },
 })
 
-local function find_venv()
-	local venv = vim.fn.getcwd() .. "/.venv/bin/python"
-	if vim.fn.executable(venv) == 1 then
-		return venv
-	else
-		return nil
-	end
-end
-
-local py_prog = find_venv()
-vim.notify("Python interpreter: " .. (py_prog or "system default"))
-if py_prog then
-	vim.g.python3_host_prog = py_prog
-end
-
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -396,9 +381,31 @@ require("lazy").setup({
 			-- Document existing key chains
 			spec = {
 				{ "<leader>s", group = "[S]earch" },
+				{ "<leader>c", group = "[C]ode" },
 				{ "<leader>t", group = "[T]oggle" },
 				{ "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
 				{ "<leader>o", group = "[O]pen" },
+			},
+		},
+	},
+	{
+		"linux-cultist/venv-selector.nvim",
+		ft = "python",
+		cmd = { "VenvSelect", "VenvSelectLog", "VenvSelectCache" },
+		keys = {
+			{ "<leader>cv", "<cmd>VenvSelect<cr>", desc = "Select Python [V]env", ft = "python" },
+		},
+		opts = {
+			options = {
+				enable_cached_venvs = true,
+				cached_venv_automatic_activation = true,
+				notify_user_on_venv_activation = true,
+				picker = "snacks",
+			},
+			search = {
+				workspace_backend = {
+					command = "$FD '/bin/python$' '$WORKSPACE_PATH/backend/jet_core' --full-path --color never -HI -a -L -E __pycache__ -E .git -E site-packages",
+				},
 			},
 		},
 	},
@@ -412,7 +419,7 @@ require("lazy").setup({
 
 	{ -- Fuzzy Finder (files, lsp, etc)
 		"nvim-telescope/telescope.nvim",
-		event = "VimEnter",
+		cmd = { "Telescope" },
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			{ -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -459,11 +466,12 @@ require("lazy").setup({
 				-- You can put your default mappings / updates / etc. in here
 				--  All the info you're looking for is in `:help telescope.setup()`
 				--
-				-- defaults = {
-				--   mappings = {
-				--     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-				--   },
-				-- },
+				defaults = {
+					file_ignore_patterns = {
+						"%.git/",
+						"%.venv/",
+					},
+				},
 				pickers = {
 					find_files = {
 						hidden = true,
@@ -480,42 +488,6 @@ require("lazy").setup({
 			-- Enable Telescope extensions if they are installed
 			pcall(require("telescope").load_extension, "fzf")
 			pcall(require("telescope").load_extension, "ui-select")
-
-			-- See `:help telescope.builtin`
-			local builtin = require("telescope.builtin")
-			vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
-			vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[S]earch [K]eymaps" })
-			vim.keymap.set("n", "<leader>sf", builtin.find_files, { desc = "[S]earch [F]iles" })
-			vim.keymap.set("n", "<leader>ss", builtin.builtin, { desc = "[S]earch [S]elect Telescope" })
-			vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch current [W]ord" })
-			vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })
-			vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[S]earch [D]iagnostics" })
-			vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[S]earch [R]esume" })
-			vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-			vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
-
-			-- Slightly advanced example of overriding default behavior and theme
-			vim.keymap.set("n", "<leader>/", function()
-				-- You can pass additional configuration to Telescope to change the theme, layout, etc.
-				builtin.current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({
-					winblend = 10,
-					previewer = false,
-				}))
-			end, { desc = "[/] Fuzzily search in current buffer" })
-
-			-- It's also possible to pass additional configuration options.
-			--  See `:help telescope.builtin.live_grep()` for information about particular keys
-			vim.keymap.set("n", "<leader>s/", function()
-				builtin.live_grep({
-					grep_open_files = true,
-					prompt_title = "Live Grep in Open Files",
-				})
-			end, { desc = "[S]earch [/] in Open Files" })
-
-			-- Shortcut for searching your Neovim configuration files
-			vim.keymap.set("n", "<leader>sn", function()
-				builtin.find_files({ cwd = vim.fn.stdpath("config") })
-			end, { desc = "[S]earch [N]eovim files" })
 		end,
 	},
 
@@ -544,12 +516,74 @@ require("lazy").setup({
 			"WhoIsSethDaniel/mason-tool-installer.nvim",
 
 			-- Useful status updates for LSP.
-			{ "j-hui/fidget.nvim", opts = {} },
+			{
+				"j-hui/fidget.nvim",
+				opts = {
+					progress = {
+						ignore_done_already = false,
+						ignore_empty_message = false,
+						lsp = {
+							log_handler = true,
+						},
+						display = {
+							skip_history = false,
+						},
+					},
+				},
+			},
 
 			-- Allows extra capabilities provided by blink.cmp
 			"saghen/blink.cmp",
 		},
 		config = function()
+			local python_root_markers = {
+				"ty.toml",
+				"pyproject.toml",
+				"setup.py",
+				"setup.cfg",
+				"requirements.txt",
+				"Pipfile",
+			}
+
+			local function find_python_root(bufnr)
+				return vim.fs.root(bufnr, python_root_markers)
+					or vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr))
+					or vim.fn.getcwd()
+			end
+
+			local function on_ruff_attach(client)
+				client.server_capabilities.hoverProvider = false
+				client.server_capabilities.signatureHelpProvider = nil
+				client.server_capabilities.documentFormattingProvider = false
+				client.server_capabilities.documentRangeFormattingProvider = false
+			end
+
+			local tsserver_filetypes = {
+				"javascript",
+				"javascriptreact",
+				"typescript",
+				"typescriptreact",
+				"vue",
+			}
+
+			local function on_typescript_attach(client, bufnr)
+				client.server_capabilities.documentFormattingProvider = false
+				client.server_capabilities.documentRangeFormattingProvider = false
+
+				if vim.bo[bufnr].filetype == "vue" and client.server_capabilities.semanticTokensProvider then
+					client.server_capabilities.semanticTokensProvider.full = false
+				end
+			end
+
+			local vue_language_server_path = vim.fn.stdpath("data")
+				.. "/mason/packages/vue-language-server/node_modules/@vue/language-server"
+			local vue_plugin = {
+				name = "@vue/typescript-plugin",
+				location = vue_language_server_path,
+				languages = { "vue" },
+				configNamespace = "typescript",
+			}
+
 			-- Brief aside: **What is LSP?**
 			--
 			-- LSP is an initialism you've probably heard, but might not understand what it is.
@@ -601,16 +635,22 @@ require("lazy").setup({
 					map("gra", vim.lsp.buf.code_action, "[G]oto Code [A]ction", { "n", "x" })
 
 					-- Find references for the word under your cursor.
-					map("grr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
+					map("grr", function()
+						Snacks.picker.lsp_references()
+					end, "[G]oto [R]eferences")
 
 					-- Jump to the implementation of the word under your cursor.
 					--  Useful when your language has ways of declaring types without an actual implementation.
-					map("gri", require("telescope.builtin").lsp_implementations, "[G]oto [I]mplementation")
+					map("gri", function()
+						Snacks.picker.lsp_implementations()
+					end, "[G]oto [I]mplementation")
 
 					-- Jump to the definition of the word under your cursor.
 					--  This is where a variable was first declared, or where a function is defined, etc.
 					--  To jump back, press <C-t>.
-					map("grd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
+					map("grd", function()
+						Snacks.picker.lsp_definitions()
+					end, "[G]oto [D]efinition")
 
 					-- WARN: This is not Goto Definition, this is Goto Declaration.
 					--  For example, in C this would take you to the header.
@@ -618,16 +658,22 @@ require("lazy").setup({
 
 					-- Fuzzy find all the symbols in your current document.
 					--  Symbols are things like variables, functions, types, etc.
-					map("gO", require("telescope.builtin").lsp_document_symbols, "Open Document Symbols")
+					map("gO", function()
+						Snacks.picker.lsp_symbols()
+					end, "Open Document Symbols")
 
 					-- Fuzzy find all the symbols in your current workspace.
 					--  Similar to document symbols, except searches over your entire project.
-					map("gW", require("telescope.builtin").lsp_dynamic_workspace_symbols, "Open Workspace Symbols")
+					map("gW", function()
+						Snacks.picker.lsp_workspace_symbols()
+					end, "Open Workspace Symbols")
 
 					-- Jump to the type of the word under your cursor.
 					--  Useful when you're not sure what type a variable is and you want to see
 					--  the definition of its *type*, not where it was *defined*.
-					map("grt", require("telescope.builtin").lsp_type_definitions, "[G]oto [T]ype Definition")
+					map("grt", function()
+						Snacks.picker.lsp_type_definitions()
+					end, "[G]oto [T]ype Definition")
 
 					-- This function resolves a difference between neovim nightly (version 0.11) and stable (version 0.10)
 					---@param client vim.lsp.Client
@@ -735,28 +781,61 @@ require("lazy").setup({
 			local servers = {
 				-- clangd = {},
 				-- gopls = {},
-				-- pyright = {},
+				ty = {
+					cmd = { vim.fn.expand("~/.local/bin/ty"), "server" },
+					root_dir = function(bufnr, on_dir)
+						on_dir(find_python_root(bufnr))
+					end,
+					init_options = {
+						logLevel = "error",
+					},
+					settings = {
+							ty = {
+								diagnosticMode = "openFilesOnly",
+								completions = {
+									autoImport = false,
+								},
+								configuration = {
+									src = {
+										exclude = { "**/migrations/**" },
+									},
+								},
+						},
+					},
+				},
+				ruff = {
+					root_dir = function(bufnr, on_dir)
+						on_dir(find_python_root(bufnr))
+					end,
+					on_attach = on_ruff_attach,
+					init_options = {
+						settings = {
+							showSyntaxErrors = false,
+							logLevel = "error",
+						},
+					},
+				},
 				rust_analyzer = {},
 				-- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
 				--
-				-- Some languages (like typescript) have entire language plugins that can be useful:
-				--    https://github.com/pmizio/typescript-tools.nvim
+				-- This config uses `vtsls` for TypeScript and `vue_ls` for Vue SFC support.
 				--
-				-- But for many setups, the LSP (`ts_ls`) will work just fine
-				ts_ls = {
-					init_options = {
-						plugins = {
-							{
-								name = "@vue/typescript-plugin",
-								location = vim.fn.stdpath("data")
-									.. "/mason/packages/vue-language-server/node_modules/@vue/language-server",
-								languages = { "vue" },
+				vtsls = {
+					filetypes = tsserver_filetypes,
+					on_attach = on_typescript_attach,
+					settings = {
+						vtsls = {
+							tsserver = {
+								globalPlugins = { vue_plugin },
+							},
+						},
+						typescript = {
+							tsserver = {
+								maxTsServerMemory = 8192,
 							},
 						},
 					},
-					filetypes = { "typescript", "javascript", "javascriptreact", "typescriptreact", "vue" },
 				},
-				--
 
 				lua_ls = {
 					-- cmd = { ... },
@@ -774,10 +853,13 @@ require("lazy").setup({
 				},
 				vue_ls = {},
 			}
+			local mason_servers = vim.tbl_filter(function(server_name)
+				return server_name ~= "ty"
+			end, vim.tbl_keys(servers or {}))
 			---@type MasonLspconfigSettings
 			---@diagnostic disable-next-line: missing-fields
 			require("mason-lspconfig").setup({
-				automatic_enable = vim.tbl_keys(servers or {}),
+				automatic_enable = mason_servers,
 			})
 
 			-- Ensure the servers and tools above are installed
@@ -793,9 +875,11 @@ require("lazy").setup({
 			--
 			-- You can add other tools here that you want Mason to install
 			-- for you, so that they are available from within Neovim.
-			local ensure_installed = vim.tbl_keys(servers or {})
+			local ensure_installed = vim.deepcopy(mason_servers)
 			vim.list_extend(ensure_installed, {
 				"stylua", -- Used to format Lua code
+				"prettierd",
+				"prettier",
 			})
 			require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
@@ -804,6 +888,7 @@ require("lazy").setup({
 			for server_name, config in pairs(servers) do
 				vim.lsp.config(server_name, config)
 			end
+			vim.lsp.enable("ty")
 
 			-- NOTE: Some servers may require an old setup until they are updated. For the full list refer here: https://github.com/neovim/nvim-lspconfig/issues/3705
 			-- These servers will have to be manually set up with require("lspconfig").server_name.setup{}
@@ -841,12 +926,22 @@ require("lazy").setup({
 				end
 			end,
 			formatters_by_ft = {
+				css = { "prettierd", "prettier", stop_after_first = true },
+				html = { "prettierd", "prettier", stop_after_first = true },
+				javascript = { "prettierd", "prettier", stop_after_first = true },
+				javascriptreact = { "prettierd", "prettier", stop_after_first = true },
+				json = { "prettierd", "prettier", stop_after_first = true },
+				jsonc = { "prettierd", "prettier", stop_after_first = true },
 				lua = { "stylua" },
+				python = { "ruff_format" },
+				scss = { "prettierd", "prettier", stop_after_first = true },
+				toml = { "prettierd", "prettier", stop_after_first = true },
+				typescript = { "prettierd", "prettier", stop_after_first = true },
+				typescriptreact = { "prettierd", "prettier", stop_after_first = true },
+				vue = { "prettierd", "prettier", stop_after_first = true },
+				yaml = { "prettierd", "prettier", stop_after_first = true },
 				-- Conform can also run multiple formatters sequentially
 				-- python = { "isort", "black" },
-				--
-				-- You can use 'stop_after_first' to run the first available formatter from the list
-				-- javascript = { "prettierd", "prettier", stop_after_first = true },
 			},
 		},
 	},
@@ -979,6 +1074,26 @@ require("lazy").setup({
 			--  You could remove this setup call if you don't like it,
 			--  and try some other statusline plugin
 			local statusline = require("mini.statusline")
+			local function python_root()
+				if vim.bo.filetype ~= "python" then
+					return ""
+				end
+
+				local clients = vim.lsp.get_clients({ bufnr = 0, name = "ty" })
+				local client = clients[1]
+				if not client then
+					return ""
+				end
+
+				local root = client.workspace_folders
+					and client.workspace_folders[1]
+					and client.workspace_folders[1].name
+				if not root or root == "" then
+					root = vim.fn.getcwd()
+				end
+
+				return "pyroot:" .. vim.fs.basename(root)
+			end
 			-- set use_icons to true if you have a Nerd Font
 			statusline.setup({
 				use_icons = vim.g.have_nerd_font,
@@ -1003,6 +1118,7 @@ require("lazy").setup({
 						local diff = MiniStatusline.section_diff({ trunc_width = 75 })
 						local diagnostics = MiniStatusline.section_diagnostics({ trunc_width = 75 })
 						local lsp = MiniStatusline.section_lsp({ trunc_width = 75 })
+						local pyroot = python_root()
 
 						local fileinfo = MiniStatusline.section_fileinfo({ trunc_width = 120 })
 
@@ -1011,7 +1127,7 @@ require("lazy").setup({
 
 						return MiniStatusline.combine_groups({
 							{ hl = mode_hl, strings = { mode } },
-							{ hl = "MiniStatuslineDevinfo", strings = { git, diff, diagnostics, lsp } },
+							{ hl = "MiniStatuslineDevinfo", strings = { git, diff, diagnostics, lsp, pyroot } },
 							"%<",
 							{ hl = "MiniStatuslineFilename", strings = buffers },
 							"%=",
@@ -1042,15 +1158,26 @@ require("lazy").setup({
 			ensure_installed = {
 				"bash",
 				"c",
+				"css",
 				"diff",
 				"html",
+				"javascript",
+				"json",
 				"lua",
 				"luadoc",
 				"markdown",
 				"markdown_inline",
+				"python",
 				"query",
+				"scss",
+				"sql",
+				"toml",
+				"tsx",
+				"typescript",
 				"vim",
 				"vimdoc",
+				"vue",
+				"yaml",
 			},
 			-- Autoinstall languages that are not installed
 			auto_install = true,
@@ -1093,9 +1220,9 @@ require("lazy").setup({
 	{ import = "custom.plugins" },
 	--
 	-- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
-	-- Or use telescope!
+	-- Or use snacks picker!
 	-- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
-	-- you can continue same window with `<space>sr` which resumes last telescope search
+	-- you can continue same window with `<space>sr` which resumes the last picker search
 }, {
 	ui = {
 		-- If you are using a Nerd Font: set icons to an empty table which will use the
