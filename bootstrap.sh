@@ -5,6 +5,7 @@ BREW_PACKAGES=(
 	starship
 	zsh-autosuggestions
 	neovim
+	uv
 )
 
 set -e
@@ -26,3 +27,14 @@ fi
 
 echo "Installing packages: ${BREW_PACKAGES[*]}..."
 brew install "${BREW_PACKAGES[@]}"
+
+echo "Installing uv-managed Python 3.13..."
+"$(brew --prefix)/bin/uv" python install 3.13 --default
+
+if [ -x "$HOME/.local/bin/ty" ]; then
+	echo "Upgrading ty..."
+	"$(brew --prefix)/bin/uv" tool upgrade ty
+else
+	echo "Installing ty..."
+	"$(brew --prefix)/bin/uv" tool install ty@latest
+fi
