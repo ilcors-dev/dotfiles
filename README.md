@@ -11,7 +11,7 @@ brew install stow
 To STOW user dotfiles, run from the root of this folder
 
 ```bash
-stow -vv -t ~ nvim zsh ghostty starship lazygit android-emulator
+stow -vv -t ~ nvim zsh ghostty starship lazygit android-emulator executables
 ```
 
 Android emulator (optional, minimal, no Android Studio):
@@ -39,6 +39,6 @@ sudo stow -vv -d "$HOME/src/dotfiles" -t "/Library/Keyboard Layouts" keyboard-la
 To UNSTOW
 
 ```bash
-stow -vv -t ~ -D nvim zsh ghostty starship lazygit android-emulator
+stow -vv -t ~ -D nvim zsh ghostty starship lazygit android-emulator executables
 sudo stow -vv -d "$HOME/src/dotfiles" -t "/Library/Keyboard Layouts" -D keyboard-layouts
 ```
