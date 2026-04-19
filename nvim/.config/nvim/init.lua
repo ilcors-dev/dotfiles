@@ -711,6 +711,14 @@ require("lazy").setup({
 		branch = "main",
 		build = ":TSUpdate",
 		config = function()
+			local treesitter_plugin = require("lazy.core.config").plugins["nvim-treesitter"]
+			if treesitter_plugin then
+				local treesitter_runtime = treesitter_plugin.dir .. "/runtime"
+				if vim.fn.isdirectory(treesitter_runtime) == 1 then
+					vim.opt.runtimepath:prepend(treesitter_runtime)
+				end
+			end
+
 			local parsers = {
 				"bash",
 				"c",
