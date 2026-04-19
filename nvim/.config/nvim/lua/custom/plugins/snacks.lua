@@ -9,6 +9,12 @@ return {
 		},
 		picker = {
 			ui_select = true,
+			sources = {
+				files = {
+					hidden = true,
+					ignored = false,
+				},
+			},
 		},
 		terminal = {
 			enabled = true,
@@ -17,8 +23,34 @@ return {
 		lazygit = {
 			enabled = true,
 		},
+		scratch = {},
 	},
 	keys = {
+		{
+			"<leader>.",
+			function()
+				local win = Snacks.scratch({
+					name = "Notes",
+					ft = "markdown",
+					filekey = {
+						cwd = false,
+						branch = false,
+						count = false,
+					},
+				})
+				if win and win.buf then
+					vim.b[win.buf].disable_lint = true
+				end
+			end,
+			desc = "Toggle Scratch Buffer",
+		},
+		{
+			"<leader>S",
+			function()
+				Snacks.scratch.select()
+			end,
+			desc = "Select Scratch Buffer",
+		},
 		{
 			"<leader>sh",
 			function()
