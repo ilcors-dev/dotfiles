@@ -25,14 +25,13 @@ local M = {
 	_last_terminal_buf = nil,
 }
 
----@param num number Terminal number (1-5)
+---@param num number
 function M.open_or_switch_to_terminal(num)
 	if num < 1 or num > 5 then
 		return
 	end
 
 	local term = M.terminals[num]
-
 	if not term.created or not vim.api.nvim_buf_is_valid(term.buf) then
 		M.create_terminal(num)
 	else
@@ -40,24 +39,22 @@ function M.open_or_switch_to_terminal(num)
 	end
 end
 
----@param num number Terminal number (1-5)
+---@param num number
 function M.create_terminal(num)
 	local current_buf = vim.api.nvim_get_current_buf()
-
-	if current_buf ~= "terminal" then
+	if vim.bo[current_buf].buftype ~= "terminal" then
 		M.last_editor_buf = current_buf
 	end
 
 	local term = M.terminals[num]
-
 	local buf = vim.api.nvim_create_buf(false, true)
+
 	vim.api.nvim_set_option_value("buflisted", true, { buf = buf })
 	vim.api.nvim_set_option_value("filetype", "terminal", { buf = buf })
 	vim.api.nvim_set_option_value("modified", false, { buf = buf })
-
 	vim.api.nvim_set_current_buf(buf)
 
-	local term_id = vim.fn.jobstart(vim.o.shell, {
+	vim.fn.jobstart(vim.o.shell, {
 		cwd = vim.fn.getcwd(),
 		term = true,
 	})
@@ -89,7 +86,6 @@ function M.get_active_terminals()
 
 	for i = 1, #M.terminals do
 		local term = M.terminals[i]
-
 		if term.created and vim.api.nvim_buf_is_valid(term.buf) then
 			table.insert(active, tostring(i))
 		end
@@ -104,22 +100,19 @@ function M.get_terminals_info()
 
 	for i = 1, #M.terminals do
 		local term = M.terminals[i]
-
 		if term.created and vim.api.nvim_buf_is_valid(term.buf) then
 			local cmd = ""
-
 			if term.commands and #term.commands > 0 then
 				cmd = term.commands[#term.commands]
 			end
 
-			table.insert(info, { number = i, command = cmd or vim.o.shell })
+			table.insert(info, { number = i, command = cmd ~= "" and cmd or vim.o.shell })
 		end
 	end
 
 	return info
 end
 
----@private
 function M._setup_keybindings()
 	for i = 1, #M.terminals do
 		vim.keymap.set("n", "<leader>" .. i, function()
@@ -132,7 +125,6 @@ function M._setup_keybindings()
 	end, { desc = "Switch to Editor" })
 end
 
----@private
 function M._setup_autocommands()
 	local group = vim.api.nvim_create_augroup("terminal_manager", { clear = true })
 
@@ -145,14 +137,12 @@ function M._setup_autocommands()
 			if buftype == "terminal" then
 				M._in_terminal_mode = true
 				M._last_terminal_buf = buf
-			else
-				if M._in_terminal_mode then
-					if M._last_terminal_buf and vim.api.nvim_buf_is_valid(M._last_terminal_buf) then
-						M._capture_terminal_commands_for_buf(M._last_terminal_buf)
-					end
-
-					M._in_terminal_mode = false
+			elseif M._in_terminal_mode then
+				if M._last_terminal_buf and vim.api.nvim_buf_is_valid(M._last_terminal_buf) then
+					M._capture_terminal_commands_for_buf(M._last_terminal_buf)
 				end
+
+				M._in_terminal_mode = false
 			end
 		end,
 	})
@@ -165,13 +155,12 @@ function M._setup_autocommands()
 	})
 end
 
----Gets the last executed command from the terminal buffer and stores it by parsing the buffer lines.
----@private
+---@param buf integer
 function M._capture_terminal_commands_for_buf(buf)
-	local term_num = nil
+	local term_num
 
-	for i, t in ipairs(M.terminals) do
-		if t.buf == buf then
+	for i, term in ipairs(M.terminals) do
+		if term.buf == buf then
 			term_num = i
 			break
 		end
@@ -189,18 +178,15 @@ function M._capture_terminal_commands_for_buf(buf)
 	term.commands = term.commands or {}
 
 	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-
 	local prompts = { "❯", "$", "#", "%", ">", ":" }
-	local last_cmd = nil
+	local last_cmd
 
 	for i = #lines, 1, -1 do
 		local line = lines[i]
-
-		for _, p in ipairs(prompts) do
-			if line:sub(1, #p) == p then
-				local cmd = line:sub(#p + 1):gsub("^%s+", ""):gsub("%s+$", "")
-
-				if cmd and cmd ~= "" then
+		for _, prompt in ipairs(prompts) do
+			if line:sub(1, #prompt) == prompt then
+				local cmd = line:sub(#prompt + 1):gsub("^%s+", ""):gsub("%s+$", "")
+				if cmd ~= "" then
 					last_cmd = cmd
 					break
 				end
@@ -221,5 +207,4 @@ function M._capture_terminal_commands_for_buf(buf)
 	end
 end
 
----@return TerminalManager
 return M

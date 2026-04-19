@@ -1,0 +1,7 @@
+require("plugins.ui")
+require("plugins.editing")
+require("plugins.navigation")
+require("plugins.git")
+require("plugins.treesitter")
+require("plugins.lsp")
+require("plugins.ai")
