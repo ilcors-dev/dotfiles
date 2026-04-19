@@ -1,6 +1,7 @@
 # zmodload zsh/zprof
 
 eval "$(starship init zsh)"
+ssh-add --apple-use-keychain ~/.ssh/jethr
 
 autoload -Uz compinit
 # if .zcompdump is missing or older than 24h, rebuild; otherwise use cache.
