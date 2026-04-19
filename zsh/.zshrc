@@ -1,6 +1,7 @@
 # zmodload zsh/zprof
 
 eval "$(starship init zsh)"
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 ssh-add --apple-use-keychain ~/.ssh/jethr
 
 autoload -Uz compinit
