@@ -42,3 +42,6 @@ else
 	echo "Installing ty..."
 	"$(brew --prefix)/bin/uv" tool install ty@latest
 fi
+
+defaults write com.apple.screencapture location /tmp
+killall SystemUIServer
