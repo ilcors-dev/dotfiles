@@ -7,6 +7,7 @@ BREW_PACKAGES=(
 	neovim
 	uv
 	prettierd
+	eslint_d
 )
 
 set -e
