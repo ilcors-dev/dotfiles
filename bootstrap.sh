@@ -6,6 +6,7 @@ BREW_PACKAGES=(
 	zsh-autosuggestions
 	neovim
 	uv
+	prettierd
 )
 
 set -e
