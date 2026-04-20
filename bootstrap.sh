@@ -5,6 +5,8 @@ BREW_PACKAGES=(
 	starship
 	zsh-autosuggestions
 	neovim
+	fd
+	tree-sitter-cli
 	uv
 	opencode
 	lazygit
