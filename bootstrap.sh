@@ -6,6 +6,8 @@ BREW_PACKAGES=(
 	zsh-autosuggestions
 	neovim
 	uv
+	opencode
+	lazygit
 	prettierd
 	eslint_d
 )
