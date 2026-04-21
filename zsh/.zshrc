@@ -41,6 +41,7 @@ export TERM="xterm-256color"
 export EDITOR="nvim"
 
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="/opt/homebrew/bin:$PATH"
 export PATH="$HOME/.composer/vendor/bin:$PATH"
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
 export PATH="/usr/local/gradle/gradle-8.6/bin:$PATH"
