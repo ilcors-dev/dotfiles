@@ -36,6 +36,7 @@ require("which-key").setup({
 	spec = {
 		{ "<leader>s", group = "[S]earch" },
 		{ "<leader>c", group = "[C]ode" },
+		{ "<leader>g", group = "[G]itHub" },
 		{ "<leader>t", group = "[T]oggle" },
 		{ "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
 		{ "<leader>o", group = "[O]pen" },
@@ -62,6 +63,7 @@ require("snacks").setup({
 	lazygit = {
 		enabled = true,
 	},
+	gh = {},
 	scratch = {},
 })
 
@@ -124,6 +126,27 @@ end, { desc = "[S]earch [/] in Open Files" })
 map("n", "<leader>sn", function()
 	Snacks.picker.files({ cwd = vim.fn.stdpath("config") })
 end, { desc = "[S]earch [N]eovim files" })
+map("n", "<leader>gi", function()
+	Snacks.picker.gh_issue()
+end, { desc = "GitHub Issues (open)" })
+map("n", "<leader>gI", function()
+	Snacks.picker.gh_issue({ state = "all" })
+end, { desc = "GitHub Issues (all)" })
+map("n", "<leader>gp", function()
+	Snacks.picker.gh_pr()
+end, { desc = "GitHub Pull Requests (open)" })
+map("n", "<leader>gP", function()
+	Snacks.picker.gh_pr({ state = "all" })
+end, { desc = "GitHub Pull Requests (all)" })
+map("n", "<leader>gm", function()
+	Snacks.picker.gh_pr({ author = "@me" })
+end, { desc = "GitHub Pull Requests (mine)" })
+map("n", "<leader>gr", function()
+	Snacks.picker.gh_pr({
+		state = "open",
+		search = '(user-review-requested:@me OR team-review-requested:jet-hr/tech) -author:app/dependabot -label:"on hold"',
+	})
+end, { desc = "GitHub Pull Requests (review)" })
 map("n", "<leader>ot", function()
 	Snacks.terminal.open()
 end, { desc = "[O]pen Terminal" })
