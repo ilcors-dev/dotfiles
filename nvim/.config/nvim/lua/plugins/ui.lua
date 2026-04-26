@@ -43,7 +43,19 @@ require("which-key").setup({
 	},
 })
 
+local milli_splash = require("milli").load({ splash = "blackhole" })
+
 require("snacks").setup({
+	dashboard = {
+		enabled = true,
+		preset = {
+			header = table.concat(milli_splash.frames[1], "\n"),
+		},
+		sections = {
+			{ section = "header", padding = 1 },
+			{ section = "keys", gap = 1, padding = 1 },
+		},
+	},
 	indent = {
 		enabled = true,
 	},
@@ -77,6 +89,50 @@ require("snacks").setup({
 	},
 	gh = {},
 	scratch = {},
+})
+require("milli").snacks({ splash = "blackhole", loop = true })
+
+vim.api.nvim_create_autocmd("UIEnter", {
+	once = true,
+	callback = function()
+		vim.schedule(function()
+			if vim.bo.filetype == "snacks_dashboard" then
+				return
+			end
+
+			local argc = vim.fn.argc(-1)
+			local directory_start = argc == 1 and vim.fn.isdirectory(vim.fn.argv(0)) == 1
+			local empty_start = argc == 0
+			if not directory_start and not empty_start then
+				return
+			end
+
+			pcall(vim.cmd, "Neotree close")
+
+			local win = vim.api.nvim_get_current_win()
+			for _, candidate in ipairs(vim.api.nvim_list_wins()) do
+				local buf = vim.api.nvim_win_get_buf(candidate)
+				if vim.api.nvim_win_get_config(candidate).relative == "" and vim.bo[buf].filetype ~= "neo-tree" then
+					win = candidate
+					break
+				end
+			end
+
+			vim.api.nvim_set_current_win(win)
+
+			local buf = vim.api.nvim_get_current_buf()
+			local use_current = empty_start
+				and vim.api.nvim_buf_get_name(buf) == ""
+				and not vim.bo[buf].modified
+				and vim.api.nvim_buf_line_count(buf) == 1
+				and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ""
+
+			Snacks.dashboard({
+				buf = use_current and buf or vim.api.nvim_create_buf(false, true),
+				win = win,
+			})
+		end)
+	end,
 })
 
 local map = vim.keymap.set
