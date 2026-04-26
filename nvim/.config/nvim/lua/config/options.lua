@@ -25,6 +25,7 @@ vim.opt.guicursor = {
 }
 vim.o.scrolloff = 10
 vim.o.confirm = true
+vim.o.termguicolors = true
 
 vim.o.tabstop = 2
 vim.o.softtabstop = 2
