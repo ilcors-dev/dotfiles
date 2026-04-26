@@ -54,6 +54,18 @@ require("snacks").setup({
 				hidden = true,
 				ignored = false,
 			},
+			buffers = {
+				transform = function(item)
+					if item.buf and item.pos and vim.api.nvim_buf_is_loaded(item.buf) then
+						local ok, line_count = pcall(vim.api.nvim_buf_line_count, item.buf)
+						if ok and item.pos[1] > line_count then
+							item.pos = { line_count, 0 }
+						end
+					end
+
+					return item
+				end,
+			},
 		},
 	},
 	terminal = {
@@ -70,7 +82,7 @@ require("snacks").setup({
 local map = vim.keymap.set
 
 map("n", "<leader>.", function()
-	local win = Snacks.scratch({
+	Snacks.scratch({
 		name = "Notes",
 		ft = "markdown",
 		filekey = {
@@ -78,10 +90,12 @@ map("n", "<leader>.", function()
 			branch = false,
 			count = false,
 		},
+		win = {
+			b = {
+				disable_lint = true,
+			},
+		},
 	})
-	if win and win.buf then
-		vim.b[win.buf].disable_lint = true
-	end
 end, { desc = "Toggle Scratch Buffer" })
 
 map("n", "<leader>S", function()
