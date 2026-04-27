@@ -1,6 +1,30 @@
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 vim.keymap.set("n", "<leader>w", "<cmd>w<CR>", { desc = "Save buffer" })
 
+vim.keymap.set("n", "<leader>cp", function()
+	local root = vim.fs.root(0, {
+		".git",
+		"package.json",
+		"pyproject.toml",
+		"Cargo.toml",
+		"go.mod",
+		"Makefile",
+	}) or vim.fn.getcwd()
+
+	local path = vim.api.nvim_buf_get_name(0)
+	if path == "" then
+		vim.notify("No file path for current buffer", vim.log.levels.WARN)
+		return
+	end
+
+	local relpath = vim.fs.relpath(root, path) or vim.fn.fnamemodify(path, ":.")
+	local cursor = vim.api.nvim_win_get_cursor(0)
+	local location = ("%s:%d:%d"):format(relpath, cursor[1], cursor[2] + 1)
+
+	vim.fn.setreg("+", location)
+	vim.notify("Copied: " .. location)
+end, { desc = "[C]opy file [P]osition" })
+
 vim.keymap.set("n", "<leader>oq", vim.diagnostic.setloclist, { desc = "[O]pen diagnostic [Q]uickfix list" })
 vim.keymap.set("n", "<leader>od", function()
 	vim.diagnostic.open_float(0, { scope = "line" })
