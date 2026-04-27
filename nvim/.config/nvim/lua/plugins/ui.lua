@@ -45,6 +45,63 @@ require("which-key").setup({
 
 local milli_splash = require("milli").load({ splash = "blackhole" })
 
+local function picker_footer_win(picker)
+	for _, win in pairs(picker.layout.box_wins or {}) do
+		if win:valid() and win:has_border() then
+			return win
+		end
+	end
+
+	if picker.layout.root:valid() and picker.layout.root:has_border() then
+		return picker.layout.root
+	end
+end
+
+local function update_picker_path_footer(picker, item)
+	if not item then
+		return
+	end
+
+	local path = Snacks.picker.util.path(item)
+	local footer_win = picker_footer_win(picker)
+	if not path or not footer_win then
+		return
+	end
+
+	path = vim.fn.fnamemodify(path, ":~:.")
+	local max_width = math.max(vim.api.nvim_win_get_width(footer_win.win) - 4, 20)
+	if vim.api.nvim_strwidth(path) > max_width then
+		path = Snacks.picker.util.truncpath(path, max_width, { kind = "left", cwd = picker:cwd() })
+	end
+
+	vim.api.nvim_win_set_config(footer_win.win, {
+		footer = { { " " .. path .. " ", "FloatFooter" } },
+		footer_pos = "left",
+	})
+end
+
+local function update_picker_current_path_footer(picker)
+	vim.schedule(function()
+		if picker.closed then
+			return
+		end
+
+		update_picker_path_footer(picker, picker:current())
+	end)
+end
+
+local filename_first_formatter = {
+	file = {
+		filename_first = true,
+		truncate = "left",
+	},
+}
+
+local path_footer = {
+	on_show = update_picker_current_path_footer,
+	on_change = update_picker_path_footer,
+}
+
 require("snacks").setup({
 	dashboard = {
 		enabled = true,
@@ -65,8 +122,18 @@ require("snacks").setup({
 			files = {
 				hidden = true,
 				ignored = false,
+				on_show = path_footer.on_show,
+				on_change = path_footer.on_change,
+				formatters = filename_first_formatter,
 			},
+			grep = vim.tbl_extend("force", path_footer, { formatters = filename_first_formatter }),
+			grep_buffers = vim.tbl_extend("force", path_footer, { formatters = filename_first_formatter }),
+			grep_word = vim.tbl_extend("force", path_footer, { formatters = filename_first_formatter }),
+			git_grep = vim.tbl_extend("force", path_footer, { formatters = filename_first_formatter }),
 			buffers = {
+				on_show = path_footer.on_show,
+				on_change = path_footer.on_change,
+				formatters = filename_first_formatter,
 				transform = function(item)
 					if item.buf and item.pos and vim.api.nvim_buf_is_loaded(item.buf) then
 						local ok, line_count = pcall(vim.api.nvim_buf_line_count, item.buf)
