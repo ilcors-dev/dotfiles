@@ -64,6 +64,13 @@ local eslint_root_markers = {
 	"package.json",
 }
 
+local eslint_app_root_markers = {
+	"vite.config.js",
+	"vite.config.mjs",
+	"vite.config.ts",
+	"vite.config.mts",
+}
+
 local eslint_filetypes = {
 	javascript = true,
 	javascriptreact = true,
@@ -98,7 +105,9 @@ vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
 			local filetype = vim.bo[args.buf].filetype
 			if eslint_filetypes[filetype] then
 				local bufname = vim.api.nvim_buf_get_name(args.buf)
-				opts.cwd = vim.fs.root(bufname, eslint_root_markers) or vim.fn.getcwd()
+				opts.cwd = vim.fs.root(bufname, eslint_app_root_markers)
+					or vim.fs.root(bufname, eslint_root_markers)
+					or vim.fn.getcwd()
 			end
 			lint.try_lint(nil, opts)
 		end
