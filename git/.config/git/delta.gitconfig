@@ -1,7 +1,7 @@
 [core]
 	pager = delta
 [interactive]
-	diffFilter = delta --light --color-only
+	diffFilter = delta --color-only
 [delta]
 	navigate = true
 [merge]
