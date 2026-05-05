@@ -65,6 +65,78 @@ local function open_commit_on_github(picker, item)
 	end)
 end
 
+local function transform_git_log_item(item, cwd)
+	local commit, msg, date, author = item.text:match("^(%S+) (.*) %((.*)%) <(.*)>$")
+	if not commit then
+		vim.notify(("Failed to parse git log item:\n%q"):format(item.text), vim.log.levels.ERROR, { title = "Git" })
+		return false
+	end
+
+	item.cwd = cwd
+	item.commit = commit
+	item.msg = msg
+	item.date = date
+	item.author = author
+	return item
+end
+
+local function grep_commit_history_finder(opts, ctx)
+	if opts.need_search ~= false and ctx.filter.search == "" then
+		return function() end
+	end
+
+	local args = {
+		"log",
+		"--pretty=format:%h %s (%ch) <%an>",
+		"--abbrev-commit",
+		"--decorate",
+		"--date=short",
+		"--color=never",
+		"--no-show-signature",
+		"--no-patch",
+		"--fixed-strings",
+		"--regexp-ignore-case",
+	}
+
+	if ctx.filter.search ~= "" then
+		args[#args + 1] = "--grep=" .. ctx.filter.search
+	end
+
+	return require("snacks.picker.source.proc").proc(
+		ctx:opts({
+			cwd = opts.cwd,
+			cmd = "git",
+			args = args,
+			notify = false,
+			---@param item snacks.picker.finder.Item
+			transform = function(item)
+				return transform_git_log_item(item, opts.cwd)
+			end,
+		}),
+		ctx
+	)
+end
+
+local function open_commit_history_grep()
+	git_root(function(root)
+		Snacks.picker.pick({
+			source = "git_history_grep",
+			title = "Git History Grep",
+			cwd = root,
+			finder = grep_commit_history_finder,
+			format = "git_log",
+			preview = "git_show",
+			confirm = open_commit_on_github,
+			focus = "input",
+			live = true,
+			supports_live = true,
+			need_search = true,
+			show_empty = true,
+			prompt = "Commit grep> ",
+		})
+	end)
+end
+
 local function pick_commits_by_author(root, author)
 	if not author or author == "" then
 		vim.notify("No author selected", vim.log.levels.WARN, { title = "Git" })
@@ -245,12 +317,17 @@ end
 
 vim.keymap.set("n", "<leader>go", open_line_commit, { desc = "GitHub [O]pen line commit" })
 vim.keymap.set("n", "<leader>gO", open_line_pr, { desc = "GitHub [O]pen line PR" })
+vim.keymap.set("n", "<leader>gc", open_commit_history_grep, { desc = "Git [C]ommit history grep" })
 vim.keymap.set("n", "<leader>ga", pick_author, { desc = "Git commits by [A]uthor" })
 vim.keymap.set("n", "<leader>gA", function()
 	current_line_author(function(root, author)
 		pick_commits_by_author(root, author)
 	end)
 end, { desc = "Git commits by line [A]uthor" })
+
+vim.api.nvim_create_user_command("GitHistoryGrep", open_commit_history_grep, {
+	desc = "Search commit messages in a Snacks picker",
+})
 
 require("gitsigns").setup({
 	signs = {
