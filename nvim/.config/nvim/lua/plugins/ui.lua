@@ -116,6 +116,9 @@ require("snacks").setup({
 	indent = {
 		enabled = true,
 	},
+	statuscolumn = {
+		enabled = true,
+	},
 	picker = {
 		ui_select = true,
 		sources = {
@@ -204,6 +207,21 @@ vim.api.nvim_create_autocmd("UIEnter", {
 
 local map = vim.keymap.set
 
+local function open_lazygit()
+	local delta_mode = vim.o.background == "light" and "--light" or "--dark"
+
+	Snacks.lazygit.open({
+		config = {
+			git = {
+				paging = {
+					colorArg = "always",
+					pager = "delta " .. delta_mode .. " --paging=never",
+				},
+			},
+		},
+	})
+end
+
 map("n", "<leader>.", function()
 	Snacks.scratch({
 		name = "Notes",
@@ -287,9 +305,7 @@ end, { desc = "GitHub Pull Requests (review)" })
 map("n", "<leader>ot", function()
 	Snacks.terminal.open()
 end, { desc = "[O]pen Terminal" })
-map("n", "<leader>ol", function()
-	Snacks.lazygit.open()
-end, { desc = "[O]pen: Lazygit" })
+map("n", "<leader>ol", open_lazygit, { desc = "[O]pen: Lazygit" })
 
 require("vercel").setup({
 	transparent = false,
