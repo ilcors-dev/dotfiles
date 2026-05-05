@@ -1,2 +1,4 @@
 git:
   overrideGpg: true
+  pagers:
+    - pager: delta --light --paging=never
