@@ -10,8 +10,11 @@ BREW_PACKAGES=(
 	uv
 	opencode
 	lazygit
+	git-delta
 	prettierd
 	eslint_d
+	markdownlint-cli
+	copilot-language-server
 )
 
 set -e
