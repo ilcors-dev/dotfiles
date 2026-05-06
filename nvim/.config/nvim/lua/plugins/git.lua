@@ -6,9 +6,18 @@ local function system(args, opts, callback)
 	end)
 end
 
+local function current_buffer_file_path(bufnr)
+	local path = vim.api.nvim_buf_get_name(bufnr or 0)
+	if path == "" or path:match("^%w+://") then
+		return nil
+	end
+
+	return path
+end
+
 local function git_root(callback)
-	local path = vim.api.nvim_buf_get_name(0)
-	local cwd = path ~= "" and vim.fn.fnamemodify(path, ":h") or vim.fn.getcwd()
+	local path = current_buffer_file_path(0)
+	local cwd = path and vim.fn.fnamemodify(path, ":h") or vim.fn.getcwd()
 
 	system({ "git", "rev-parse", "--show-toplevel" }, { cwd = cwd, text = true }, function(result)
 		if result.code ~= 0 then
@@ -21,9 +30,9 @@ local function git_root(callback)
 end
 
 local function current_tracked_file(callback)
-	local path = vim.api.nvim_buf_get_name(0)
-	if path == "" then
-		vim.notify("Current buffer has no file path", vim.log.levels.WARN, { title = "Git" })
+	local path = current_buffer_file_path(0)
+	if not path then
+		vim.notify("Current buffer is not a file", vim.log.levels.WARN, { title = "Git" })
 		return
 	end
 
