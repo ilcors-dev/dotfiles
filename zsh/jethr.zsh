@@ -1,7 +1,7 @@
 ssh-add --apple-use-keychain ~/.ssh/jethr
 
 jet_sync_host_venv() {
-  local repo="/Users/ilcors-dev/src/jethr"
+  local repo="$HOME/src/jethr"
   local backend="$repo/backend/jet_core"
   local python_bin="${1:-python3.13}"
 
@@ -30,7 +30,7 @@ jet_sync_host_venv() {
 }
 
 jet_nvim() {
-  local repo="/Users/ilcors-dev/src/jethr"
+  local repo="$HOME/src/jethr"
 
   jet_sync_host_venv "$@" || return 1
   cd "$repo" || return 1
@@ -41,5 +41,7 @@ alias jet="./dev-tools.sh"
 alias jet-sync-venv="jet_sync_host_venv"
 alias jet-nvim="jet_nvim"
 alias jet-format-be="jet format-backend && jet ruff-fix && jet lint-backend"
+alias jet-db="jet db-get-newest-dump && jet db-from-dump"
+alias jet-reset="jet pip-sync && jet npm ci && jet migrate"
 
 export DEV_SKIP_SPA="jet_accountant jet_studio jet_studio_customer jet_studio_employee"
