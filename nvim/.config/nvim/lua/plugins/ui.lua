@@ -360,9 +360,14 @@ statusline.setup({
 			table.insert(buffers, filename)
 
 			local tm = require("core.terminal_manager")
-			if #tm.get_active_terminals() > 0 then
-				for _, term in pairs(tm.get_terminals_info()) do
-					table.insert(buffers, "term#" .. term.number .. ":" .. term.command:sub(1, 24))
+			local terms = tm.get_terminals_info()
+			if #terms > 0 then
+				for _, term in ipairs(terms) do
+					if term.label:match("^opencode #") then
+						table.insert(buffers, term.label)
+					else
+						table.insert(buffers, term.label .. ":" .. term.command:sub(1, 24))
+					end
 				end
 			end
 
