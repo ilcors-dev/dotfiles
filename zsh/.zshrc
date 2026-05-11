@@ -53,3 +53,7 @@ export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
 
 # jet
 export PATH="/bin/bash:$PATH"
+
+if [ -f '/Users/ilcors-dev/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/ilcors-dev/google-cloud-sdk/path.zsh.inc'; fi
+
+if [ -f '/Users/ilcors-dev/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/ilcors-dev/google-cloud-sdk/completion.zsh.inc'; fi
