@@ -43,5 +43,6 @@ alias jet-nvim="jet_nvim"
 alias jet-format-be="jet format-backend && jet ruff-fix && jet lint-backend"
 alias jet-db="jet db-get-newest-dump && jet db-from-dump"
 alias jet-reset="jet pip-sync && jet npm ci && jet migrate"
+alias jet-sh="jet manage shell_plus"
 
 export DEV_SKIP_SPA="jet_accountant jet_studio jet_studio_customer jet_studio_employee"
