@@ -1,5 +1,7 @@
 require("nvim-autopairs").setup({})
 
+local progress = require("core.progress")
+
 local function js_formatters(bufnr)
 	local conform = require("conform")
 	local formatters = { "eslint_d" }
@@ -45,7 +47,13 @@ require("conform").setup({
 })
 
 vim.keymap.set({ "n", "v" }, "<leader>f", function()
-	require("conform").format({ async = true, lsp_format = "fallback" })
+	local progress_handle = progress.start({ title = "Format", message = "Formatting buffer..." })
+	local attempted = require("conform").format({ async = true, lsp_format = "fallback" }, function()
+		progress.finish(progress_handle)
+	end)
+	if not attempted then
+		progress.finish(progress_handle)
+	end
 end, { desc = "[F]ormat buffer" })
 
 local lint = require("lint")

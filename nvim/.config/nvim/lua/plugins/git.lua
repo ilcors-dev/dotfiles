@@ -1,4 +1,14 @@
+local progress = require("core.progress")
+
 local function system(args, opts, callback)
+	opts = opts or {}
+	local progress_handle = opts.progress
+	local progress_message = opts.progress_message
+	opts.progress = nil
+	opts.progress_message = nil
+
+	progress.update(progress_handle, progress_message)
+
 	vim.system(args, opts, function(result)
 		vim.schedule(function()
 			callback(result)
@@ -15,45 +25,61 @@ local function current_buffer_file_path(bufnr)
 	return path
 end
 
-local function git_root(callback)
+local function git_root(callback, progress_handle)
 	local path = current_buffer_file_path(0)
 	local cwd = path and vim.fn.fnamemodify(path, ":h") or vim.fn.getcwd()
 
-	system({ "git", "rev-parse", "--show-toplevel" }, { cwd = cwd, text = true }, function(result)
-		if result.code ~= 0 then
-			vim.notify("Current buffer is not inside a git repository", vim.log.levels.WARN, { title = "Git" })
-			return
-		end
+	system(
+		{ "git", "rev-parse", "--show-toplevel" },
+		{ cwd = cwd, text = true, progress = progress_handle, progress_message = "Finding repository root..." },
+		function(result)
+			if result.code ~= 0 then
+				progress.finish(progress_handle)
+				vim.notify("Current buffer is not inside a git repository", vim.log.levels.WARN, { title = "Git" })
+				return
+			end
 
-		callback(vim.trim(result.stdout))
-	end)
+			callback(vim.trim(result.stdout))
+		end
+	)
 end
 
-local function current_tracked_file(callback)
+local function current_tracked_file(callback, progress_handle)
 	local path = current_buffer_file_path(0)
 	if not path then
+		progress.finish(progress_handle)
 		vim.notify("Current buffer is not a file", vim.log.levels.WARN, { title = "Git" })
 		return
 	end
 
 	local path_dir = vim.fn.fnamemodify(path, ":h")
-	system({ "git", "rev-parse", "--show-toplevel" }, { cwd = path_dir, text = true }, function(root_result)
-		if root_result.code ~= 0 then
-			vim.notify("Current file is not inside a git repository", vim.log.levels.WARN, { title = "Git" })
-			return
-		end
-
-		local root = vim.trim(root_result.stdout)
-		local relpath = vim.fs.relpath(root, path) or path
-		system({ "git", "ls-files", "--full-name", "--", relpath }, { cwd = root, text = true }, function(file_result)
-			if file_result.code ~= 0 or vim.trim(file_result.stdout) == "" then
-				vim.notify("Current file is not tracked by git", vim.log.levels.WARN, { title = "Git" })
+	system(
+		{ "git", "rev-parse", "--show-toplevel" },
+		{ cwd = path_dir, text = true, progress = progress_handle, progress_message = "Finding repository root..." },
+		function(root_result)
+			if root_result.code ~= 0 then
+				progress.finish(progress_handle)
+				vim.notify("Current file is not inside a git repository", vim.log.levels.WARN, { title = "Git" })
 				return
 			end
 
-			callback(root, vim.trim(file_result.stdout))
-		end)
-	end)
+			local root = vim.trim(root_result.stdout)
+			local relpath = vim.fs.relpath(root, path) or path
+			system(
+				{ "git", "ls-files", "--full-name", "--", relpath },
+				{ cwd = root, text = true, progress = progress_handle, progress_message = "Checking tracked file..." },
+				function(file_result)
+					if file_result.code ~= 0 or vim.trim(file_result.stdout) == "" then
+						progress.finish(progress_handle)
+						vim.notify("Current file is not tracked by git", vim.log.levels.WARN, { title = "Git" })
+						return
+					end
+
+					callback(root, vim.trim(file_result.stdout))
+				end
+			)
+		end
+	)
 end
 
 local function open_commit_on_github(picker, item)
@@ -63,15 +89,21 @@ local function open_commit_on_github(picker, item)
 	end
 
 	picker:close()
-	system({ "gh", "browse", item.commit }, { cwd = item.cwd or picker:cwd(), text = true }, function(result)
-		if result.code ~= 0 then
-			vim.notify(
-				vim.trim(result.stderr ~= "" and result.stderr or "Could not open commit on GitHub"),
-				vim.log.levels.ERROR,
-				{ title = "GitHub" }
-			)
+	local progress_handle = progress.start({ title = "GitHub", message = "Opening commit in browser..." })
+	system(
+		{ "gh", "browse", item.commit },
+		{ cwd = item.cwd or picker:cwd(), text = true, progress = progress_handle },
+		function(result)
+			progress.finish(progress_handle)
+			if result.code ~= 0 then
+				vim.notify(
+					vim.trim(result.stderr ~= "" and result.stderr or "Could not open commit on GitHub"),
+					vim.log.levels.ERROR,
+					{ title = "GitHub" }
+				)
+			end
 		end
-	end)
+	)
 end
 
 local function transform_git_log_item(item, cwd)
@@ -127,7 +159,9 @@ local function grep_commit_history_finder(opts, ctx)
 end
 
 local function open_commit_history_grep()
+	local progress_handle = progress.start({ title = "Git", message = "Finding repository root..." })
 	git_root(function(root)
+		progress.finish(progress_handle)
 		Snacks.picker.pick({
 			source = "git_history_grep",
 			title = "Git History Grep",
@@ -143,7 +177,7 @@ local function open_commit_history_grep()
 			show_empty = true,
 			prompt = "Commit grep> ",
 		})
-	end)
+	end, progress_handle)
 end
 
 local function pick_commits_by_author(root, author)
@@ -159,169 +193,212 @@ local function pick_commits_by_author(root, author)
 	})
 end
 
-local function current_line_author(callback)
+local function current_line_author(callback, progress_handle)
 	current_tracked_file(function(root, file)
 		local line = vim.api.nvim_win_get_cursor(0)[1]
-		system({ "git", "blame", "-L", line .. "," .. line, "--porcelain", "--", file }, { cwd = root, text = true }, function(blame_result)
-			if blame_result.code ~= 0 then
-				vim.notify("Could not blame current line", vim.log.levels.ERROR, { title = "Git" })
-				return
-			end
+		system(
+			{ "git", "blame", "-L", line .. "," .. line, "--porcelain", "--", file },
+			{ cwd = root, text = true, progress = progress_handle, progress_message = "Blaming current line..." },
+			function(blame_result)
+				if blame_result.code ~= 0 then
+					progress.finish(progress_handle)
+					vim.notify("Could not blame current line", vim.log.levels.ERROR, { title = "Git" })
+					return
+				end
 
-			local author = blame_result.stdout:match("\nauthor ([^\n]+)")
-			local mail = blame_result.stdout:match("\nauthor%-mail <([^>]+)>")
-			if not author then
-				vim.notify("No author found for current line", vim.log.levels.WARN, { title = "Git" })
-				return
-			end
+				local author = blame_result.stdout:match("\nauthor ([^\n]+)")
+				local mail = blame_result.stdout:match("\nauthor%-mail <([^>]+)>")
+				if not author then
+					progress.finish(progress_handle)
+					vim.notify("No author found for current line", vim.log.levels.WARN, { title = "Git" })
+					return
+				end
 
-			callback(root, mail and (author .. " <" .. mail .. ">") or author)
-		end)
-	end)
+				callback(root, mail and (author .. " <" .. mail .. ">") or author)
+			end
+		)
+	end, progress_handle)
 end
 
-local function current_line_commit(callback)
+local function current_line_commit(callback, progress_handle)
 	current_tracked_file(function(root, file)
 		local line = vim.api.nvim_win_get_cursor(0)[1]
-		system({ "git", "blame", "-L", line .. "," .. line, "--porcelain", "--", file }, { cwd = root, text = true }, function(blame_result)
-			if blame_result.code ~= 0 then
-				vim.notify("Could not blame current line", vim.log.levels.ERROR, { title = "GitHub" })
-				return
-			end
+		system(
+			{ "git", "blame", "-L", line .. "," .. line, "--porcelain", "--", file },
+			{ cwd = root, text = true, progress = progress_handle, progress_message = "Blaming current line..." },
+			function(blame_result)
+				if blame_result.code ~= 0 then
+					progress.finish(progress_handle)
+					vim.notify("Could not blame current line", vim.log.levels.ERROR, { title = "GitHub" })
+					return
+				end
 
-			local sha = blame_result.stdout:match("^(%x+)")
-			if not sha then
-				vim.notify("Could not find a commit for current line", vim.log.levels.WARN, { title = "GitHub" })
-				return
-			end
+				local sha = blame_result.stdout:match("^(%x+)")
+				if not sha then
+					progress.finish(progress_handle)
+					vim.notify("Could not find a commit for current line", vim.log.levels.WARN, { title = "GitHub" })
+					return
+				end
 
-			if sha:match("^0+$") then
-				vim.notify("Current line is uncommitted", vim.log.levels.WARN, { title = "GitHub" })
-				return
-			end
+				if sha:match("^0+$") then
+					progress.finish(progress_handle)
+					vim.notify("Current line is uncommitted", vim.log.levels.WARN, { title = "GitHub" })
+					return
+				end
 
-			callback(root, sha)
-		end)
-	end)
+				callback(root, sha)
+			end
+		)
+	end, progress_handle)
 end
 
 local function pick_author()
+	local progress_handle = progress.start({ title = "Git", message = "Loading git authors..." })
 	git_root(function(root)
-		system({ "git", "log", "--all", "--format=%an <%ae>" }, { cwd = root, text = true }, function(author_result)
-			if author_result.code ~= 0 then
-				vim.notify("Could not list git authors", vim.log.levels.ERROR, { title = "Git" })
-				return
-			end
-
-			local authors = {}
-			local by_email = {}
-			for author in author_result.stdout:gmatch("[^\n]+") do
-				if author ~= "" and not authors[author] then
-					authors[author] = { author = author }
-					local email = author:match("<([^>]+)>")
-					if email then
-						by_email[email:lower()] = author
-					end
+		system(
+			{ "git", "log", "--all", "--format=%an <%ae>" },
+			{ cwd = root, text = true, progress = progress_handle, progress_message = "Loading git authors..." },
+			function(author_result)
+				if author_result.code ~= 0 then
+					progress.finish(progress_handle)
+					vim.notify("Could not list git authors", vim.log.levels.ERROR, { title = "Git" })
+					return
 				end
-			end
 
-			system({
-				"gh",
-				"api",
-				"repos/{owner}/{repo}/collaborators",
-				"--paginate",
-				"--jq",
-				".[] | [.login, .name, .email] | @tsv",
-			}, { cwd = root, text = true }, function(collaborator_result)
-				if collaborator_result.code == 0 then
-					for line in collaborator_result.stdout:gmatch("[^\n]+") do
-						local login, name, email = line:match("([^\t]*)\t([^\t]*)\t([^\t]*)")
-						local author = email and by_email[email:lower()] or nil
-						if author then
-							authors[author].login = login ~= "" and login or nil
-						elseif name and name ~= "" then
-							for existing, item in pairs(authors) do
-								if existing:lower():find(name:lower(), 1, true) then
-									item.login = login ~= "" and login or nil
-									break
-								end
-							end
+				local authors = {}
+				local by_email = {}
+				for author in author_result.stdout:gmatch("[^\n]+") do
+					if author ~= "" and not authors[author] then
+						authors[author] = { author = author }
+						local email = author:match("<([^>]+)>")
+						if email then
+							by_email[email:lower()] = author
 						end
 					end
 				end
 
-				local items = vim.tbl_values(authors)
-				if #items == 0 then
-					vim.notify("No git authors found", vim.log.levels.WARN, { title = "Git" })
-					return
-				end
-
-				table.sort(items, function(a, b)
-					return a.author:lower() < b.author:lower()
-				end)
-
-				vim.ui.select(items, {
-					prompt = "Git author:",
-					format_item = function(item)
-						return item.login and (item.author .. "  @" .. item.login) or item.author
-					end,
-				}, function(item)
-					if item then
-						pick_commits_by_author(root, item.author)
+				system({
+					"gh",
+					"api",
+					"repos/{owner}/{repo}/collaborators",
+					"--paginate",
+					"--jq",
+					".[] | [.login, .name, .email] | @tsv",
+				}, {
+					cwd = root,
+					text = true,
+					progress = progress_handle,
+					progress_message = "Loading GitHub collaborators...",
+				}, function(collaborator_result)
+					if collaborator_result.code == 0 then
+						for line in collaborator_result.stdout:gmatch("[^\n]+") do
+							local login, name, email = line:match("([^\t]*)\t([^\t]*)\t([^\t]*)")
+							local author = email and by_email[email:lower()] or nil
+							if author then
+								authors[author].login = login ~= "" and login or nil
+							elseif name and name ~= "" then
+								for existing, item in pairs(authors) do
+									if existing:lower():find(name:lower(), 1, true) then
+										item.login = login ~= "" and login or nil
+										break
+									end
+								end
+							end
+						end
 					end
+
+					local items = vim.tbl_values(authors)
+					if #items == 0 then
+						progress.finish(progress_handle)
+						vim.notify("No git authors found", vim.log.levels.WARN, { title = "Git" })
+						return
+					end
+
+					table.sort(items, function(a, b)
+						return a.author:lower() < b.author:lower()
+					end)
+
+					progress.finish(progress_handle)
+					vim.ui.select(items, {
+						prompt = "Git author:",
+						format_item = function(item)
+							return item.login and (item.author .. "  @" .. item.login) or item.author
+						end,
+					}, function(item)
+						if item then
+							pick_commits_by_author(root, item.author)
+						end
+					end)
 				end)
-			end)
-		end)
-	end)
+			end
+		)
+	end, progress_handle)
 end
 
 local function open_line_commit()
+	local progress_handle = progress.start({ title = "GitHub", message = "Resolving current line commit..." })
 	current_line_commit(function(root, sha)
-		system({ "gh", "browse", sha }, { cwd = root, text = true }, function(result)
-			if result.code ~= 0 then
-				vim.notify(
-					vim.trim(result.stderr ~= "" and result.stderr or "Could not open commit on GitHub"),
-					vim.log.levels.ERROR,
-					{ title = "GitHub" }
-				)
+		system(
+			{ "gh", "browse", sha },
+			{ cwd = root, text = true, progress = progress_handle, progress_message = "Opening commit in browser..." },
+			function(result)
+				progress.finish(progress_handle)
+				if result.code ~= 0 then
+					vim.notify(
+						vim.trim(result.stderr ~= "" and result.stderr or "Could not open commit on GitHub"),
+						vim.log.levels.ERROR,
+						{ title = "GitHub" }
+					)
+				end
 			end
-		end)
-	end)
+		)
+	end, progress_handle)
 end
 
 local function open_line_pr()
+	local progress_handle = progress.start({ title = "GitHub", message = "Resolving current line commit..." })
 	current_line_commit(function(root, sha)
-		system({
-			"gh",
-			"pr",
-			"list",
-			"--search",
-			sha,
-			"--state",
-			"merged",
-			"--json",
-			"url",
-			"--jq",
-			".[0].url",
-		}, { cwd = root, text = true }, function(result)
-			if result.code ~= 0 then
-				vim.notify(
-					vim.trim(result.stderr ~= "" and result.stderr or "Could not search GitHub PRs"),
-					vim.log.levels.ERROR,
-					{ title = "GitHub" }
-				)
-				return
-			end
+		system(
+			{
+				"gh",
+				"pr",
+				"list",
+				"--search",
+				sha,
+				"--state",
+				"merged",
+				"--json",
+				"url",
+				"--jq",
+				".[0].url",
+			},
+			{
+				cwd = root,
+				text = true,
+				progress = progress_handle,
+				progress_message = "Searching merged pull requests...",
+			},
+			function(result)
+				progress.finish(progress_handle)
+				if result.code ~= 0 then
+					vim.notify(
+						vim.trim(result.stderr ~= "" and result.stderr or "Could not search GitHub PRs"),
+						vim.log.levels.ERROR,
+						{ title = "GitHub" }
+					)
+					return
+				end
 
-			local url = vim.trim(result.stdout)
-			if url == "" then
-				vim.notify("No PR found for commit " .. sha:sub(1, 8), vim.log.levels.WARN, { title = "GitHub" })
-				return
-			end
+				local url = vim.trim(result.stdout)
+				if url == "" then
+					vim.notify("No PR found for commit " .. sha:sub(1, 8), vim.log.levels.WARN, { title = "GitHub" })
+					return
+				end
 
-			vim.ui.open(url)
-		end)
-	end)
+				vim.ui.open(url)
+			end
+		)
+	end, progress_handle)
 end
 
 vim.keymap.set("n", "<leader>go", open_line_commit, { desc = "GitHub [O]pen line commit" })
@@ -329,9 +406,11 @@ vim.keymap.set("n", "<leader>gO", open_line_pr, { desc = "GitHub [O]pen line PR"
 vim.keymap.set("n", "<leader>gc", open_commit_history_grep, { desc = "Git [C]ommit history grep" })
 vim.keymap.set("n", "<leader>ga", pick_author, { desc = "Git commits by [A]uthor" })
 vim.keymap.set("n", "<leader>gA", function()
+	local progress_handle = progress.start({ title = "Git", message = "Resolving current line author..." })
 	current_line_author(function(root, author)
+		progress.finish(progress_handle)
 		pick_commits_by_author(root, author)
-	end)
+	end, progress_handle)
 end, { desc = "Git commits by line [A]uthor" })
 
 vim.api.nvim_create_user_command("GitHistoryGrep", open_commit_history_grep, {
