@@ -299,9 +299,9 @@ end, { desc = "GitHub Pull Requests (mine)" })
 map("n", "<leader>gr", function()
 	Snacks.picker.gh_pr({
 		state = "open",
-		search = '(user-review-requested:@me OR team-review-requested:jet-hr/tech) -author:app/dependabot -label:"on hold"',
+		search = '(assignee:@me OR user-review-requested:@me OR team-review-requested:jet-hr/tech OR team-review-requested:jet-hr/ops-optimization) -author:app/dependabot -label:"on hold"',
 	})
-end, { desc = "GitHub Pull Requests (review)" })
+end, { desc = "GitHub Pull Requests (assigned / review)" })
 map("n", "<leader>ot", function()
 	Snacks.terminal.open()
 end, { desc = "[O]pen Terminal" })
@@ -323,16 +323,39 @@ require("onedark").setup({
 	},
 })
 
+local function set_dark_theme()
+	vim.o.background = "dark"
+	vim.cmd.colorscheme("vercel")
+end
+
+local function set_light_theme()
+	vim.o.background = "light"
+	vim.cmd.colorscheme("onedark")
+end
+
+vim.api.nvim_create_user_command("ThemeDark", set_dark_theme, {
+	desc = "Switch to dark theme",
+})
+
+vim.api.nvim_create_user_command("ThemeLight", set_light_theme, {
+	desc = "Switch to light theme",
+})
+
+vim.api.nvim_create_user_command("ThemeToggle", function()
+	if vim.o.background == "dark" then
+		set_light_theme()
+		return
+	end
+
+	set_dark_theme()
+end, {
+	desc = "Toggle between dark and light themes",
+})
+
 require("auto-dark-mode").setup({
 	update_interval = 1000,
-	set_dark_mode = function()
-		vim.o.background = "dark"
-		vim.cmd.colorscheme("vercel")
-	end,
-	set_light_mode = function()
-		vim.o.background = "light"
-		vim.cmd.colorscheme("onedark")
-	end,
+	set_dark_mode = set_dark_theme,
+	set_light_mode = set_light_theme,
 })
 require("auto-dark-mode").init()
 
