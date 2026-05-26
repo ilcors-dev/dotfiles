@@ -1,0 +1,7 @@
+[include]
+	path = ~/.config/git/aliases.gitconfig
+[include]
+	path = ~/.config/git/delta.gitconfig
+
+[push]
+	useForceIfIncludes = true
