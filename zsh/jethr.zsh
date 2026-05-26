@@ -37,9 +37,47 @@ jet_nvim() {
   nvim .
 }
 
+jet_migrate_undo() {
+  if (( $# == 0 )); then
+    print -u2 "Usage: jet-mu <migration_id> [migration_id ...]"
+    print -u2 "Example: jet-mu 0575 0576"
+    return 1
+  fi
+
+  local id numeric_id
+  local min_id=""
+  for id in "$@"; do
+    numeric_id="${id%%[^0-9]*}"
+    if [[ -z "$numeric_id" ]]; then
+      print -u2 "Invalid migration id: $id"
+      print -u2 "Migration ids must start with digits (example: 0575 or 0575_merge_foo)"
+      return 1
+    fi
+
+    if [[ -z "$min_id" || 10#$numeric_id -lt 10#$min_id ]]; then
+      min_id="$numeric_id"
+    fi
+  done
+
+  if (( 10#$min_id <= 1 )); then
+    print "Undoing via migrate to: zero"
+    jet manage migrate jet zero
+    return $?
+  fi
+
+  local target_num=$((10#$min_id - 1))
+  local width=${#min_id}
+  local target
+  target=$(printf "%0${width}d" "$target_num")
+
+  print "Undoing via migrate to: $target"
+  jet manage migrate jet "$target"
+}
+
 alias jet="./dev-tools.sh"
 alias jet-sync-venv="jet_sync_host_venv"
 alias jet-nvim="jet_nvim"
+alias jet-mu="jet_migrate_undo"
 alias jet-format-be="jet format-backend && jet ruff-fix && jet lint-backend"
 alias jet-db="jet db-get-newest-dump && jet db-from-dump"
 alias jet-reset="jet pip-sync && jet npm ci && jet migrate"
