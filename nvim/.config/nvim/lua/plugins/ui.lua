@@ -37,6 +37,7 @@ require("which-key").setup({
 		{ "<leader>s", group = "[S]earch" },
 		{ "<leader>c", group = "[C]ode" },
 		{ "<leader>g", group = "[G]itHub" },
+		{ "<leader>r", group = "[R]eplace" },
 		{ "<leader>t", group = "[T]oggle" },
 		{ "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
 		{ "<leader>o", group = "[O]pen" },
@@ -299,7 +300,7 @@ end, { desc = "GitHub Pull Requests (mine)" })
 map("n", "<leader>gr", function()
 	Snacks.picker.gh_pr({
 		state = "open",
-		search = '(assignee:@me OR user-review-requested:@me OR team-review-requested:jet-hr/tech OR team-review-requested:jet-hr/ops-optimization) -author:app/dependabot -label:"on hold"',
+		search = '(assignee:@me OR user-review-requested:@me OR team-review-requested:jet-hr/tech OR team-review-requested:jet-hr/ops-optimization) -label:"on hold"',
 	})
 end, { desc = "GitHub Pull Requests (assigned / review)" })
 map("n", "<leader>ot", function()
