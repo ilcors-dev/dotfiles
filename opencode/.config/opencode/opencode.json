@@ -10,5 +10,6 @@
       "url": "https://mcp.notion.com/mcp",
       "enabled": true
     }
-  }
+  },
+  "plugin": ["@khalilgharbaoui/opencode-claude-code-plugin"]
 }
