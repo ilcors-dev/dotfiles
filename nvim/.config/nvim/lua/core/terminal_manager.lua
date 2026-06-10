@@ -244,6 +244,7 @@ function M.open_specific_opencode(number)
 
 	if buf then
 		M._last_opencode_buf = buf
+		M._setup_opencode_scroll_keymaps(buf)
 	end
 end
 
@@ -287,6 +288,15 @@ function M.switch_to_last_opencode()
 	end
 
 	vim.notify("No recent opencode buffer", vim.log.levels.WARN)
+end
+
+---@param buf integer
+function M._setup_opencode_scroll_keymaps(buf)
+	for _, key in ipairs({ "<ScrollWheelUp>", "<ScrollWheelDown>", "<ScrollWheelLeft>", "<ScrollWheelRight>" }) do
+		vim.keymap.set("n", key, function()
+			vim.cmd.startinsert()
+		end, { buffer = buf, silent = true })
+	end
 end
 
 function M._setup_keybindings()

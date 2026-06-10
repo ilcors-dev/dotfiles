@@ -24,19 +24,5 @@ vim.api.nvim_create_autocmd({ "TermOpen", "BufEnter" }, {
 		end
 
 		apply_terminal_window_options()
-
-		if event.event ~= "TermOpen" then
-			return
-		end
-
-		local function resume_terminal_with_scroll()
-			vim.cmd.startinsert()
-		end
-
-		for _, key in ipairs({ "<ScrollWheelUp>", "<ScrollWheelDown>", "<ScrollWheelLeft>", "<ScrollWheelRight>" }) do
-			vim.keymap.set("n", key, function()
-				resume_terminal_with_scroll()
-			end, { buffer = event.buf, silent = true })
-		end
 	end,
 })
