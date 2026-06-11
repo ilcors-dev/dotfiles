@@ -121,3 +121,15 @@ vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
 		end
 	end,
 })
+
+require("csvview").setup({
+	parser = { comments = { "#" } },
+	view = { display_mode = "highlight" },
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = "csv",
+	callback = function()
+		require("csvview").enable()
+	end,
+})
