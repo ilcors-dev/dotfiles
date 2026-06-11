@@ -33,6 +33,7 @@ vim.pack.add({
 	gh("folke/todo-comments.nvim"),
 	gh("folke/which-key.nvim"),
 	{ src = gh("github/copilot.vim"), version = "release" },
+	gh("hat0uma/csvview.nvim"),
 	gh("j-hui/fidget.nvim"),
 	gh("lewis6991/gitsigns.nvim"),
 	gh("linux-cultist/venv-selector.nvim"),
