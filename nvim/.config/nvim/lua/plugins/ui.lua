@@ -210,6 +210,7 @@ local map = vim.keymap.set
 
 local function open_lazygit()
 	local delta_mode = vim.o.background == "light" and "--light" or "--dark"
+	vim.g.lazygit_source_win = vim.api.nvim_get_current_win()
 
 	Snacks.lazygit.open({
 		config = {

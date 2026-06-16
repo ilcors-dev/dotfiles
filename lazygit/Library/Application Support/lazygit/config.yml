@@ -1,2 +1,6 @@
 git:
   overrideGpg: true
+
+os:
+  edit: 'nvim -- {{filename}}'
+  editAtLine: 'nvim +{{line}} -- {{filename}}'
