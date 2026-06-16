@@ -1,5 +1,6 @@
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 vim.keymap.set("n", "<leader>w", "<cmd>w<CR>", { desc = "Save buffer" })
+vim.keymap.set("n", "<leader>x", "<cmd>bwipeout<CR>", { desc = "Wipe out buffer" })
 
 local function project_root()
 	return vim.fs.root(0, {
