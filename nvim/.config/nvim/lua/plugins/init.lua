@@ -1,4 +1,3 @@
-require("plugins.flatten")
 require("plugins.ui")
 require("plugins.editing")
 require("plugins.navigation")

@@ -2,5 +2,5 @@ git:
   overrideGpg: true
 
 os:
-  edit: 'nvim -- {{filename}}'
-  editAtLine: 'nvim +{{line}} -- {{filename}}'
+  edit: '[ -z "$NVIM" ] && nvim -- {{filename}} || nvim --server "$NVIM" --remote-send "<C-\\><C-n>:lua require(\"core.lazygit_edit\").open([[{{filename}}]])<CR>"'
+  editAtLine: '[ -z "$NVIM" ] && nvim +{{line}} -- {{filename}} || nvim --server "$NVIM" --remote-send "<C-\\><C-n>:lua require(\"core.lazygit_edit\").open_at_line([[{{filename}}]], {{line}})<CR>"'
