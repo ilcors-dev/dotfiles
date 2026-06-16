@@ -207,12 +207,21 @@ vim.api.nvim_create_autocmd("UIEnter", {
 })
 
 local map = vim.keymap.set
+local lazygit_state = require("core.lazygit_state")
 
 local function open_lazygit()
 	local delta_mode = vim.o.background == "light" and "--light" or "--dark"
-	vim.g.lazygit_source_win = vim.api.nvim_get_current_win()
+	lazygit_state.set_source_win(vim.api.nvim_get_current_win())
+	lazygit_state.set_cwd(vim.fn.getcwd())
 
-	Snacks.lazygit.open({
+	local terminal = lazygit_state.get()
+	if terminal and terminal.buf_valid and terminal:buf_valid() then
+		terminal:show()
+		terminal:focus()
+		return
+	end
+
+	lazygit_state.set(Snacks.lazygit.open({
 		config = {
 			git = {
 				paging = {
@@ -221,7 +230,7 @@ local function open_lazygit()
 				},
 			},
 		},
-	})
+	}))
 end
 
 map("n", "<leader>.", function()
