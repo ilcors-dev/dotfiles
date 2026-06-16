@@ -28,6 +28,7 @@ vim.pack.add({
 	gh("echasnovski/mini.nvim"),
 	gh("f-person/auto-dark-mode.nvim"),
 	gh("folke/lazydev.nvim"),
+	gh("willothy/flatten.nvim"),
 	gh("Amansingh-afk/milli.nvim"),
 	gh("folke/snacks.nvim"),
 	gh("folke/todo-comments.nvim"),
