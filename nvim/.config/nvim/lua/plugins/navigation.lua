@@ -1,4 +1,5 @@
 require("neo-tree").setup({
+	open_files_do_not_replace_types = { "Trouble", "qf", "edgy" }, -- drop "terminal" so files take over the terminal window
 	filesystem = {
 		hijack_netrw_behavior = "disabled",
 		window = {

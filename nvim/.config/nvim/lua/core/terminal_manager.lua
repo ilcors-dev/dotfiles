@@ -72,6 +72,7 @@ end
 ---@field num integer?
 ---@field name string?
 ---@field cmd string|string[]?
+---@field cwd string?
 ---@field env table<string, string>?
 
 ---@param opts CreateTerminalOpts
@@ -91,7 +92,7 @@ function M.create_terminal(opts)
 	vim.api.nvim_set_current_buf(buf)
 
 	local job = vim.fn.jobstart(opts.cmd or vim.o.shell, {
-		cwd = vim.fn.getcwd(),
+		cwd = opts.cwd or vim.fn.getcwd(),
 		env = opts.env,
 		term = true,
 	})
