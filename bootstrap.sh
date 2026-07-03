@@ -15,6 +15,7 @@ BREW_PACKAGES=(
 	eslint_d
 	markdownlint-cli
 	copilot-language-server
+	tuicr
 )
 
 set -e

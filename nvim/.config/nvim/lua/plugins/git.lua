@@ -358,47 +358,63 @@ end
 local function open_line_pr()
 	local progress_handle = progress.start({ title = "GitHub", message = "Resolving current line commit..." })
 	current_line_commit(function(root, sha)
-		system(
-			{
-				"gh",
-				"pr",
-				"list",
-				"--search",
-				sha,
-				"--state",
-				"merged",
-				"--json",
-				"url",
-				"--jq",
-				".[0].url",
-			},
-			{
-				cwd = root,
-				text = true,
-				progress = progress_handle,
-				progress_message = "Searching merged pull requests...",
-			},
-			function(result)
-				progress.finish(progress_handle)
-				if result.code ~= 0 then
-					vim.notify(
-						vim.trim(result.stderr ~= "" and result.stderr or "Could not search GitHub PRs"),
-						vim.log.levels.ERROR,
-						{ title = "GitHub" }
-					)
-					return
-				end
-
-				local url = vim.trim(result.stdout)
-				if url == "" then
-					vim.notify("No PR found for commit " .. sha:sub(1, 8), vim.log.levels.WARN, { title = "GitHub" })
-					return
-				end
-
-				vim.ui.open(url)
+		system({
+			"gh",
+			"pr",
+			"list",
+			"--search",
+			sha,
+			"--state",
+			"merged",
+			"--json",
+			"url",
+			"--jq",
+			".[0].url",
+		}, {
+			cwd = root,
+			text = true,
+			progress = progress_handle,
+			progress_message = "Searching merged pull requests...",
+		}, function(result)
+			progress.finish(progress_handle)
+			if result.code ~= 0 then
+				vim.notify(
+					vim.trim(result.stderr ~= "" and result.stderr or "Could not search GitHub PRs"),
+					vim.log.levels.ERROR,
+					{ title = "GitHub" }
+				)
+				return
 			end
-		)
+
+			local url = vim.trim(result.stdout)
+			if url == "" then
+				vim.notify("No PR found for commit " .. sha:sub(1, 8), vim.log.levels.WARN, { title = "GitHub" })
+				return
+			end
+
+			vim.ui.open(url)
+		end)
 	end, progress_handle)
+end
+
+local function open_tuicr(args)
+	local cmd = { "tuicr", "--no-update-check" }
+	vim.list_extend(cmd, args)
+
+	local name = #args == 0 and "tuicr" or "tuicr: " .. table.concat(args, " ")
+	return Snacks.terminal.focus(cmd, {
+		cwd = vim.fn.getcwd(),
+		interactive = true,
+		auto_close = false,
+		win = {
+			position = "current",
+			on_buf = function(self)
+				if vim.fn.bufnr(name) == -1 then
+					vim.api.nvim_buf_set_name(self.buf, name)
+				end
+			end,
+		},
+	})
 end
 
 vim.keymap.set("n", "<leader>go", open_line_commit, { desc = "GitHub [O]pen line commit" })
@@ -416,6 +432,15 @@ end, { desc = "Git commits by line [A]uthor" })
 vim.api.nvim_create_user_command("GitHistoryGrep", open_commit_history_grep, {
 	desc = "Search commit messages in a Snacks picker",
 })
+
+vim.api.nvim_create_user_command("Tuicr", function(opts)
+	open_tuicr(opts.fargs)
+end, {
+	nargs = "*",
+	desc = "Open tuicr",
+})
+
+vim.keymap.set("n", "<leader>or", "<cmd>Tuicr<CR>", { desc = "[O]pen: Tuicr [R]eview" })
 
 require("gitsigns").setup({
 	signs = {

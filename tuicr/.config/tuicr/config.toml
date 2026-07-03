@@ -1,0 +1,17 @@
+appearance = "system"
+theme_dark = "vercel-dark"
+theme_light = "onedark-light"
+
+diff_view = "side-by-side"
+show_file_list = true
+mouse = true
+leader = " "
+comment_vim = true
+wrap = true
+cursor_line = true
+transparent_background = false
+scroll_offset = 5
+backend = "libgit2"
+
+[forge]
+comment_type_prefix = false
