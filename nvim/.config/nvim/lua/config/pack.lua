@@ -45,6 +45,7 @@ vim.pack.add({
 	gh("nvim-lua/plenary.nvim"),
 	gh("nvim-neo-tree/neo-tree.nvim"),
 	gh("nvim-tree/nvim-web-devicons"),
+	gh("Juksuu/worktrees.nvim"),
 	{ src = gh("nvim-treesitter/nvim-treesitter"), version = "main" },
 	{ src = gh("saghen/blink.cmp"), version = vim.version.range("1") },
 	gh("stevearc/conform.nvim"),

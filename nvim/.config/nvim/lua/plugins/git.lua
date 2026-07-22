@@ -1,5 +1,7 @@
 local progress = require("core.progress")
 
+require("worktrees").setup()
+
 local function system(args, opts, callback)
 	opts = opts or {}
 	local progress_handle = opts.progress
@@ -421,6 +423,15 @@ vim.keymap.set("n", "<leader>go", open_line_commit, { desc = "GitHub [O]pen line
 vim.keymap.set("n", "<leader>gO", open_line_pr, { desc = "GitHub [O]pen line PR" })
 vim.keymap.set("n", "<leader>gc", open_commit_history_grep, { desc = "Git [C]ommit history grep" })
 vim.keymap.set("n", "<leader>ga", pick_author, { desc = "Git commits by [A]uthor" })
+vim.keymap.set("n", "<leader>gws", function()
+	Snacks.picker.worktrees()
+end, { desc = "Git [W]orktree [S]witch" })
+vim.keymap.set("n", "<leader>gwn", function()
+	Snacks.picker.worktrees_new()
+end, { desc = "Git [W]orktree [N]ew" })
+vim.keymap.set("n", "<leader>gwr", function()
+	Snacks.picker.worktrees_remove()
+end, { desc = "Git [W]orktree [R]emove" })
 vim.keymap.set("n", "<leader>gA", function()
 	local progress_handle = progress.start({ title = "Git", message = "Resolving current line author..." })
 	current_line_author(function(root, author)
