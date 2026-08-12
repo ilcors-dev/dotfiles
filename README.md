@@ -12,7 +12,15 @@ To STOW user dotfiles, run from the root of this folder
 
 ```bash
 stow -vv -t ~ nvim zsh ghostty starship lazygit android-emulator executables opencode git tuicr
+stow --no-folding -vv -t ~ agents
 ```
+
+The `opencode` package installs the tracked global configuration, local plugins,
+and their dependency manifest. On first startup, OpenCode installs the npm
+plugins from `opencode.json`.
+
+Optional private configuration can provide `~/.zsh/local.zsh` and
+`~/.config/local-nvim-work.lua`. The public packages work without them.
 
 Android emulator (optional, minimal, no Android Studio):
 
@@ -40,5 +48,6 @@ To UNSTOW
 
 ```bash
 stow -vv -t ~ -D nvim zsh ghostty starship lazygit android-emulator executables opencode git tuicr
+stow --no-folding -vv -t ~ -D agents
 sudo stow -vv -d "$HOME/src/dotfiles" -t "/Library/Keyboard Layouts" -D keyboard-layouts
 ```

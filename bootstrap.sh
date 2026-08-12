@@ -9,6 +9,7 @@ BREW_PACKAGES=(
 	tree-sitter-cli
 	uv
 	opencode
+	rtk
 	lazygit
 	git-delta
 	prettierd

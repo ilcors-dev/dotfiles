@@ -1,0 +1,4 @@
+interface:
+  display_name: "Technical Spec Drafting"
+  short_description: "Draft concise implementation specs"
+  default_prompt: "Use $draft-technical-spec to study a problem and draft a concise technical specification."
