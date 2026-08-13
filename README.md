@@ -15,6 +15,8 @@ stow -vv -t ~ nvim zsh ghostty starship lazygit executables opencode git tuicr
 stow --no-folding -vv -t ~ agents
 ```
 
+The `agents` package installs shared skills into `~/.agents/skills`.
+
 The `opencode` package installs the tracked global configuration, local plugins,
 and their dependency manifest. On first startup, OpenCode installs the npm
 plugins from `opencode.json`.
