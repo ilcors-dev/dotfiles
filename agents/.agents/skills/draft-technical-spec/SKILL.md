@@ -28,6 +28,8 @@ Ask focused questions only when an unresolved choice changes the proposed soluti
 - Compare all three approaches in one decision matrix. Choose three to five metrics that materially affect the decision. Score each metric from 1 to 5, where 5 is best. Support each score with evidence or an explicit assumption. Do not preselect a winner.
 - Highlight the chosen Approach A column in bold in the decision matrix. Put approval and rejection statements in a Decision section after the matrix, not in the approach descriptions.
 - Give each approach a compact pros-and-cons table. Use three rows by default. Do not use more than five rows.
+- Each approach should be descriptive enough to let a reader understand the trade-offs and implementation implications. Avoid implementation detail that does not affect the decision.
+- For each approach report the proposed code change. Only the relevant and salient part. Only if it's short enough
 - Include contracts for changed APIs, data models, events, or background jobs. State ownership, inputs, outputs, validation, and idempotency as applicable.
 - Add an Error Handling section when the design has material validation errors, external dependencies, asynchronous work, partial completion, or recovery paths. Omit it when none apply.
 - Include one diagram only when a flow has three or more dependent steps. Prefer a small sequence or flow diagram.
