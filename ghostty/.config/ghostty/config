@@ -2,7 +2,7 @@ theme = light:CLRS,dark:Vercel
 
 font-family = "FiraCode Nerd Font Mono"
 font-style = Reg
-font-size = 16
+font-size = 14
 font-thicken = true
 
 adjust-cursor-thickness = 4
