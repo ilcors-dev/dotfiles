@@ -1,9 +1,9 @@
 theme = light:CLRS,dark:Vercel
 
-font-family = "FiraCode Nerd Font Mono"
-font-style = Reg
+font-family = "Ioskeley Mono"
 font-size = 14
 font-thicken = true
+font-feature = zero
 
 adjust-cursor-thickness = 4
 shell-integration-features = no-cursor

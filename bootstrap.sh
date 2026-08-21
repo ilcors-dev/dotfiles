@@ -17,6 +17,8 @@ BREW_PACKAGES=(
 	markdownlint-cli
 	copilot-language-server
 	tuicr
+	font-ioskeley-mono
+	font-fira-code-nerd-font
 )
 
 set -e
