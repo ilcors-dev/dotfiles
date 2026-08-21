@@ -1,4 +1,15 @@
 local progress = require("core.progress")
+local actions = require("diffview.actions")
+
+require("diffview").setup({
+	keymaps = {
+		view = {
+			{ "n", "co", actions.conflict_choose_all("ours"), { desc = "Choose conflict --ours" } },
+			{ "n", "ct", actions.conflict_choose_all("theirs"), { desc = "Choose conflict --theirs" } },
+			{ "n", "cb", actions.conflict_choose_all("base"), { desc = "Choose conflict --base" } },
+		},
+	},
+})
 
 require("worktrees").setup()
 
