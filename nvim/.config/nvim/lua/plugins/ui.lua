@@ -318,30 +318,30 @@ map("n", "<leader>ot", function()
 end, { desc = "[O]pen Terminal" })
 map("n", "<leader>ol", open_lazygit, { desc = "[O]pen: Lazygit" })
 
-require("vercel").setup({
-	transparent = false,
-	styles = {
-		comments = { italic = true },
-		keywords = { bold = true },
-	},
-})
-
-require("onedark").setup({
-	style = "light",
-	transparent = false,
-	code_style = {
-		comments = "italic",
-	},
-})
+-- require("vercel").setup({
+-- 	transparent = false,
+-- 	styles = {
+-- 		comments = { italic = true },
+-- 		keywords = { bold = true },
+-- 	},
+-- })
+--
+-- require("onedark").setup({
+-- 	style = "light",
+-- 	transparent = false,
+-- 	code_style = {
+-- 		comments = "italic",
+-- 	},
+-- })
 
 local function set_dark_theme()
 	vim.o.background = "dark"
-	vim.cmd.colorscheme("vercel")
+	vim.cmd.colorscheme("circadia")
 end
 
 local function set_light_theme()
 	vim.o.background = "light"
-	vim.cmd.colorscheme("onedark")
+	vim.cmd.colorscheme("circadia")
 end
 
 vim.api.nvim_create_user_command("ThemeDark", set_dark_theme, {
@@ -426,6 +426,22 @@ statusline.setup({
 		end,
 	},
 })
+
+local _section_git = statusline.section_git
+statusline.section_git = function(args)
+	args = args or {}
+	local s = _section_git(args)
+	local max = args.max_len or 32
+	if statusline.is_truncated(160) then
+		max = 20
+	elseif statusline.is_truncated(120) then
+		max = 12
+	end
+	if vim.fn.strchars(s) > max then
+		s = vim.fn.strcharpart(s, 0, max - 1) .. "…"
+	end
+	return s
+end
 
 statusline.section_location = function()
 	return "%2l:%-2v"
