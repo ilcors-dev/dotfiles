@@ -1,0 +1,25 @@
+# Circadia — Warm Ember & Obsidian (Dark)
+# Ghostty theme — derived from ports/kitty/circadia-dark.conf
+background = #15141b
+foreground = #eae3d8
+cursor-color = #e89a49
+cursor-text = #15141b
+selection-background = #252330
+selection-foreground = #eae3d8
+
+palette = 0=#252330
+palette = 1=#e89a49
+palette = 2=#a7db76
+palette = 3=#f6a84d
+palette = 4=#89c8e4
+palette = 5=#e59de8
+palette = 6=#f1be85
+palette = 7=#eae3d8
+palette = 8=#92887d
+palette = 9=#f8c88f
+palette = 10=#a7db76
+palette = 11=#f6a84d
+palette = 12=#89c8e4
+palette = 13=#e59de8
+palette = 14=#f1be85
+palette = 15=#ffffff

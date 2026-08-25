@@ -1,0 +1,25 @@
+# Circadia — Warm Parchment (Light)
+# Ghostty theme — derived from ports/kitty/circadia-light.conf
+background = #f4eee1
+foreground = #28323a
+cursor-color = #195697
+cursor-text = #f4eee1
+selection-background = #e2d8c3
+selection-foreground = #28323a
+
+palette = 0=#28323a
+palette = 1=#8a2d00
+palette = 2=#085802
+palette = 3=#7f3500
+palette = 4=#09489a
+palette = 5=#631c84
+palette = 6=#7f3500
+palette = 7=#5f6d7a
+palette = 8=#46535f
+palette = 9=#8a2d00
+palette = 10=#085802
+palette = 11=#7f3500
+palette = 12=#236bb5
+palette = 13=#631c84
+palette = 14=#09489a
+palette = 15=#28323a
