@@ -103,6 +103,37 @@ local path_footer = {
 	on_change = update_picker_path_footer,
 }
 
+local tests_excludes = { "**/tests/**", "**/__tests__/**" }
+local function sync_tests_exclude(picker)
+	local base = tests_excludes
+	local is_set = {}
+	for _, v in ipairs(base) do
+		is_set[v] = true
+	end
+	local exclude = picker.opts.exclude or {}
+	local filtered = {}
+	for _, e in ipairs(exclude) do
+		if not is_set[e] then
+			table.insert(filtered, e)
+		end
+	end
+	if not picker.opts.tests then
+		vim.list_extend(filtered, base)
+	end
+	picker.opts.exclude = filtered
+end
+
+local function tests_filter_transform(picker, filter)
+	sync_tests_exclude(picker)
+end
+
+local grep_source_base = vim.tbl_extend("force", path_footer, {
+	formatters = filename_first_formatter,
+	tests = false,
+	exclude = vim.deepcopy(tests_excludes),
+	filter = { transform = tests_filter_transform },
+})
+
 require("snacks").setup({
 	dashboard = {
 		enabled = true,
@@ -122,6 +153,23 @@ require("snacks").setup({
 	},
 	picker = {
 		ui_select = true,
+		toggles = {
+			tests = { icon = "󰙨 ", value = true },
+		},
+		win = {
+			input = {
+				keys = {
+					["<a-t>"] = { "toggle_tests", mode = { "n", "i" }, desc = "Include tests" },
+					["<c-t>"] = { "toggle_tests", mode = { "n", "i" }, desc = "Include tests" },
+				},
+			},
+			list = {
+				keys = {
+					["<a-t>"] = { "toggle_tests", mode = { "n", "i" }, desc = "Include tests" },
+					["<c-t>"] = { "toggle_tests", mode = { "n", "i" }, desc = "Include tests" },
+				},
+			},
+		},
 		sources = {
 			files = {
 				hidden = true,
@@ -130,9 +178,16 @@ require("snacks").setup({
 				on_change = path_footer.on_change,
 				formatters = filename_first_formatter,
 			},
-			grep = vim.tbl_extend("force", path_footer, { formatters = filename_first_formatter }),
-			grep_buffers = vim.tbl_extend("force", path_footer, { formatters = filename_first_formatter }),
-			grep_word = vim.tbl_extend("force", path_footer, { formatters = filename_first_formatter }),
+			grep = grep_source_base,
+			grep_buffers = vim.tbl_extend("force", grep_source_base, { buffers = true }),
+			grep_word = vim.tbl_extend("force", grep_source_base, {
+				regex = false,
+				args = { "--word-regexp" },
+				search = function(picker)
+					return picker:word()
+				end,
+				live = false,
+			}),
 			git_grep = vim.tbl_extend("force", path_footer, { formatters = filename_first_formatter }),
 			buffers = {
 				on_show = path_footer.on_show,

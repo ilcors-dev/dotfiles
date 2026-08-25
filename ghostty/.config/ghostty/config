@@ -1,4 +1,4 @@
-theme = light:CLRS,dark:Vercel
+theme = light:circadia-light,dark:circadia-dark
 
 font-family = "Ioskeley Mono"
 font-size = 14
@@ -11,5 +11,7 @@ shell-integration-features = no-cursor
 window-inherit-font-size = false
 
 custom-shader = shaders/cursor_warp.glsl
+cursor-color = #FD022D
 
 background-opacity = 0.9
+macos-option-as-alt = true
