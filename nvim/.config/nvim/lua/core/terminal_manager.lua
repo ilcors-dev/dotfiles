@@ -321,16 +321,16 @@ function M._setup_keybindings()
 	for i = 1, OPENCODE_MAX do
 		vim.keymap.set("n", "<leader>o" .. i, function()
 			M.open_or_switch_to_opencode(i)
-		end, { desc = "OpenCode " .. i })
+		end, { desc = "Open Agent " .. i })
 	end
 
 	vim.keymap.set("n", "<leader>o0", function()
 		M.switch_to_last_opencode()
-	end, { desc = "OpenCode recent" })
+	end, { desc = "Open Agent recent" })
 
 	vim.keymap.set("n", "<leader>oo", function()
 		M.open_opencode()
-	end, { desc = "[O]pen or focus [O]penCode" })
+	end, { desc = "Open or focus Agent" })
 
 	vim.keymap.set("n", "<leader>0", function()
 		M.switch_to_editor()
