@@ -59,3 +59,10 @@ if [ -f '/Users/ilcors-dev/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/ilco
 if [ -f '/Users/ilcors-dev/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/ilcors-dev/google-cloud-sdk/completion.zsh.inc'; fi
 
 alias n="nvim ."
+
+# bun completions
+[ -s "/Users/ilcors-dev/.bun/_bun" ] && source "/Users/ilcors-dev/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
