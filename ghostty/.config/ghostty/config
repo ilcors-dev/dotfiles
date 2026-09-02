@@ -1,9 +1,14 @@
+term = xterm-256color
+
 theme = light:circadia-light,dark:circadia-dark
 
 font-family = "Ioskeley Mono"
 font-size = 14
 font-thicken = true
 font-feature = zero
+font-feature = -calt
+font-feature = -liga
+font-feature = -dlig
 
 adjust-cursor-thickness = 4
 shell-integration-features = no-cursor
