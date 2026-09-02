@@ -24,15 +24,12 @@ plugins from `opencode.json`.
 Optional private configuration can provide `~/.zsh/local.zsh` and
 `~/.config/local-nvim-work.lua`. The public packages work without them.
 
-To use another agent executable for the `<leader>o1`, `<leader>o2`, and
-`<leader>o3` terminals, return its path from `local-nvim-work.lua`:
+The default agent executable for the `<leader>o1`, `<leader>o2`, and
+`<leader>o3` terminals is configured in
+`nvim/.config/nvim/lua/config/options.lua`:
 
 ```lua
-return {
-	terminal_manager = {
-		agent_command = "/path/to/agent",
-	},
-}
+vim.g.terminal_manager_agent_command = "/opt/homebrew/bin/omp"
 ```
 
 To STOW system keyboard layouts (requires sudo)

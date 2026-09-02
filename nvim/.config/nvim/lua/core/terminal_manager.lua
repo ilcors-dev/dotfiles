@@ -27,7 +27,7 @@ local M = {
 	_in_terminal_mode = false,
 	_last_terminal_buf = nil,
 	_last_opencode_buf = nil,
-	agent_command = "opencode",
+	agent_command = vim.g.terminal_manager_agent_command or "opencode",
 }
 
 ---@class TerminalManagerOpts
