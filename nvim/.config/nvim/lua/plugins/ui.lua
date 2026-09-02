@@ -127,6 +127,26 @@ local function tests_filter_transform(picker, filter)
 	sync_tests_exclude(picker)
 end
 
+local function is_test_file(file)
+	return file and (file:find("/tests/", 1, true) or file:find("/__tests__/", 1, true))
+end
+
+local function tests_item_transform(item, ctx)
+	local picker = ctx and ctx.picker or nil
+	local opts = picker and picker.opts or {}
+	if opts.tests then
+		return item
+	end
+	local file = item.file or item._path
+	if not file and item.buf and vim.api.nvim_buf_is_valid(item.buf) then
+		file = vim.api.nvim_buf_get_name(item.buf)
+	end
+	if is_test_file(file) or is_test_file(item.text) then
+		return false
+	end
+	return item
+end
+
 local grep_source_base = vim.tbl_extend("force", path_footer, {
 	formatters = filename_first_formatter,
 	tests = false,
@@ -153,6 +173,10 @@ require("snacks").setup({
 	},
 	picker = {
 		ui_select = true,
+		tests = false,
+		exclude = vim.deepcopy(tests_excludes),
+		filter = { transform = tests_filter_transform },
+		transform = tests_item_transform,
 		toggles = {
 			tests = { icon = "󰙨 ", value = true },
 		},
@@ -193,7 +217,10 @@ require("snacks").setup({
 				on_show = path_footer.on_show,
 				on_change = path_footer.on_change,
 				formatters = filename_first_formatter,
-				transform = function(item)
+				transform = function(item, ctx)
+					if tests_item_transform(item, ctx) == false then
+						return false
+					end
 					if item.buf and item.pos and vim.api.nvim_buf_is_loaded(item.buf) then
 						local ok, line_count = pcall(vim.api.nvim_buf_line_count, item.buf)
 						if ok and item.pos[1] > line_count then
