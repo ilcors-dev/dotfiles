@@ -14,6 +14,7 @@
 ---@field _in_terminal_mode boolean
 ---@field _last_terminal_buf integer?
 ---@field _last_opencode_buf integer?
+---@field agent_command string
 local M = {
 	terminals = {
 		[1] = { buf = nil, created = false, commands = {} },
@@ -26,7 +27,11 @@ local M = {
 	_in_terminal_mode = false,
 	_last_terminal_buf = nil,
 	_last_opencode_buf = nil,
+	agent_command = "opencode",
 }
+
+---@class TerminalManagerOpts
+---@field agent_command string?
 
 local OPENCODE_LABEL_PREFIX = "opencode #"
 local OPENCODE_MAX = 3
@@ -128,7 +133,13 @@ function M.switch_to_editor()
 	end
 end
 
-function M.setup()
+---@param opts TerminalManagerOpts?
+function M.setup(opts)
+	opts = opts or {}
+	if opts.agent_command then
+		M.agent_command = opts.agent_command
+	end
+
 	M._setup_keybindings()
 	M._setup_user_commands()
 	M._setup_autocommands()
@@ -187,7 +198,7 @@ function M.get_opencode_terminals()
 				table.insert(info, {
 					number = number,
 					label = opencode_label(number),
-					command = "opencode",
+					command = M.agent_command,
 				})
 			end
 		end
@@ -239,7 +250,7 @@ function M.open_specific_opencode(number)
 
 	local buf = M.create_terminal({
 		name = opencode_buffer_name(number),
-		cmd = { "opencode" },
+		cmd = { M.agent_command },
 		env = { OPENCODE_ENABLE_EXA = "1" },
 	})
 
