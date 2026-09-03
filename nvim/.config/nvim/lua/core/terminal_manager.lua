@@ -256,7 +256,9 @@ function M.open_specific_opencode(number)
 
 	if buf then
 		M._last_opencode_buf = buf
-		M._setup_opencode_scroll_keymaps(buf)
+		if vim.fn.fnamemodify(M.agent_command, ":t") == "opencode" then
+			M._setup_opencode_scroll_keymaps(buf)
+		end
 	end
 end
 
