@@ -1,7 +1,6 @@
 # zmodload zsh/zprof
 
 eval "$(starship init zsh)"
-ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 
 [ -f "${ZDOTDIR:-$HOME}/.zsh/local.zsh" ] && source "${ZDOTDIR:-$HOME}/.zsh/local.zsh"
 
