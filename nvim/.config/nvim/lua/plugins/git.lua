@@ -378,7 +378,7 @@ local function open_line_pr()
 			"--search",
 			sha,
 			"--state",
-			"merged",
+			"all",
 			"--json",
 			"url",
 			"--jq",
@@ -387,7 +387,7 @@ local function open_line_pr()
 			cwd = root,
 			text = true,
 			progress = progress_handle,
-			progress_message = "Searching merged pull requests...",
+			progress_message = "Searching pull requests...",
 		}, function(result)
 			progress.finish(progress_handle)
 			if result.code ~= 0 then
