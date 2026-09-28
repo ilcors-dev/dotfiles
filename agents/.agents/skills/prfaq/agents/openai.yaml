@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR/FAQ Drafting"
+  short_description: "Frame customer-first initiatives before implementation"
+  default_prompt: "Use $prfaq to write a customer-centred PR/FAQ that frames this initiative without code references."
