@@ -1,15 +1,6 @@
 modelRoles:
-  task: anthropic/claude-sonnet-5-5:auto
-  plan: anthropic/claude-fable-5-1:auto
-  slow: openai-codex/gpt-6.1-sol:auto
-  designer: anthropic/claude-fable-5-1:auto
-  commit: openai-codex/gpt-6-luna:auto
-  tiny: openai-codex/gpt-5.6-luna:auto
-  vision: anthropic/claude-opus-5:auto
-  advisor: anthropic/claude-opus-5-5:auto
-  REVIEWER: anthropic/claude-fable-5-1:auto
-  smol: anthropic/claude-sonnet-5-5:auto
-  default: anthropic/claude-opus-5-5
+  advisor: opencode-go/muse-spark-1.3-contributor
+  default: opencode-go/muse-spark-1.3-contributor
 composer:
   shape: pi
   tokenRate: false
@@ -24,23 +15,6 @@ display:
   hideToolActivity: false
 dev:
   autoqaConsent: granted
-retry:
-  fallbackChains:
-    plan:
-      - openai-codex/gpt-5.6-sol
-    slow:
-      - anthropic/claude-fable-5-1
-    smol:
-      - openai-codex/gpt-5.6-terra
-    default:
-      - openai-codex/gpt-5.6-terra
-    REVIEWER:
-      - openai-codex/gpt-6.1-sol
-    advisor:
-      - openai-codex/gpt-5.6-sol
-      - anthropic/claude-fable-5-1
-    task:
-      - openai-codex/gpt-5.6-terra
 defaultThinkingLevel: auto
 memory:
   backend: mnemopi
@@ -51,8 +25,16 @@ task:
 symbolPreset: nerd
 statusLine:
   preset: custom
-  leftSegments: [vim, model, mode, subagents, git, pr]
-  rightSegments: [session_name, context_pct]
+  leftSegments:
+    - vim
+    - model
+    - mode
+    - subagents
+    - git
+    - pr
+  rightSegments:
+    - session_name
+    - context_pct
   segmentOptions:
     model:
       showThinkingLevel: true
@@ -75,3 +57,23 @@ startup:
 edit:
   mode: hashline
 readLineNumbers: true
+tui:
+  vimMode: true
+  vimModeDisplay: text
+modelPresets:
+  personal:
+    modelRoles:
+      advisor: opencode-go/muse-spark-1.3-contributor
+      default: opencode-go/muse-spark-1.3-contributor
+    defaultThinkingLevel: auto
+  work:
+    modelRoles:
+      advisor: anthropic/claude-opus-5-5
+      default: anthropic/claude-opus-5-5
+      work: anthropic/claude-opus-5-5:auto
+      commit: openai-codex/gpt-6-luna:auto
+      task: anthropic/claude-sonnet-5-5:auto
+      tiny: openai-codex/gpt-6-luna:auto
+      plan: anthropic/claude-opus-5-5:auto
+    defaultThinkingLevel: auto
+modelRoleStorage: global
