@@ -1,3 +1,4 @@
+
 require("nvim-autopairs").setup({})
 
 local progress = require("core.progress")
@@ -97,7 +98,6 @@ end
 lint.linters_by_ft = {
 	javascript = { "eslint_d" },
 	javascriptreact = { "eslint_d" },
-	markdown = { "markdownlint" },
 	python = { "ruff" },
 	typescript = { "eslint_d" },
 	typescriptreact = { "eslint_d" },
@@ -133,3 +133,7 @@ vim.api.nvim_create_autocmd("FileType", {
 		require("csvview").enable()
 	end,
 })
+
+-- simplemd is developed locally; vim.pack has no local-path source
+vim.opt.rtp:prepend(vim.fn.expand("~/src/simplemd"))
+require("simplemd").setup()
