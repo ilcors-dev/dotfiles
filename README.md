@@ -18,6 +18,18 @@ stow --no-folding -vv -t ~ agents omp
 The `launchd` package installs `~/Library/LaunchAgents/dev.ilcors.powerlog.plist`,
 which runs `power-log` every 60s into `~/.local/share/powerlog/` (untracked).
 Enable with `launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/dev.ilcors.powerlog.plist`.
+`power-report [days]` prints day-by-day kWh with an ASCII chart.
+CSV schema (`~/.local/share/powerlog/power-<year>.csv`):
+| column | unit | meaning |
+|---|---|---|
+| `timestamp` | ISO-8601 | sample time |
+| `boottime` | epoch sec | reboot detection; report starts a new segment on change |
+| `wall_acc_mJ` | mJ odometer | wall-drawn energy; frozen on battery; **bill ledger** via deltas ÷ 3.6e9 |
+| `sys_acc_mJ` | mJ odometer | energy the Mac consumed, counts through sleep; **consumption ledger** |
+| `inp_mW` / `sys_mW` / `wall_mW` | mW instant | debug/context only, never billed (staircase sensor); folded ≥ 0 |
+| `batt_mW` | mW instant, signed | `>0` charging, `<0` discharging |
+Rules: kWh from accumulator deltas only; backward step (wrap or SMC reset) → new
+segment, gap Δ=0 + flagged; sleep needs no interpolation (SMC counts through it).
 
 The `agents` package installs shared skills into `~/.agents/skills`.
 
