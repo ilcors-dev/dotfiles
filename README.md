@@ -11,9 +11,13 @@ brew install stow
 To STOW user dotfiles, run from the root of this folder
 
 ```bash
-stow -vv -t ~ nvim zsh ghostty starship lazygit executables opencode git tuicr
+stow -vv -t ~ nvim zsh ghostty starship lazygit executables opencode git tuicr launchd
 stow --no-folding -vv -t ~ agents omp
 ```
+
+The `launchd` package installs `~/Library/LaunchAgents/dev.ilcors.powerlog.plist`,
+which runs `power-log` every 60s into `~/.local/share/powerlog/` (untracked).
+Enable with `launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/dev.ilcors.powerlog.plist`.
 
 The `agents` package installs shared skills into `~/.agents/skills`.
 

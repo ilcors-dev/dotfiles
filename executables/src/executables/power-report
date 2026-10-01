@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""power-report: day-by-day kWh from ~/.local/share/powerlog/power-*.csv.
+
+Two ledgers from accumulator deltas (mJ / 3.6e9 -> kWh):
+  wall  = what you pay (from the wall)
+  sys   = what the Mac consumed
+
+Segment rules:
+  - boottime change            -> new segment (reboot), gap contributes 0
+  - either accumulator steps back with same boottime
+                               -> new segment, gap contributes 0 and is flagged
+                                 (wrap vs SMC reset are indistinguishable; losing
+                                 one 60s interval beats booking ~1.19 phantom kWh)
+  - implied avg > 120 W        -> row flagged, interval contributes 0
+    (adapter is 96 W; anything above is a telemetry glitch)
+
+Sleep gaps need no interpolation: the SMC counts through sleep, so the
+landing interval's delta already contains the gap's energy.
+
+Usage: power-report [days]   (default 14, ASCII day chart + totals)
+"""
+
+import csv
+import glob
+import os
+import sys
+from collections import defaultdict
+from datetime import date, datetime, timedelta
+
+DATA_DIR = os.path.expanduser("~/.local/share/powerlog")
+MWH_TO_KWH = 3.6e9
+MAX_W = 120_000  # mW; adapter ceiling is 96 W
+BAR_W = 28
+
+
+def rows():
+    for path in sorted(glob.glob(os.path.join(DATA_DIR, "power-*.csv"))):
+        with open(path, newline="") as f:
+            for r in csv.DictReader(f):
+                try:
+                    yield {
+                        "ts": datetime.fromisoformat(r["timestamp"]),
+                        "boot": int(r["boottime"]),
+                        "wall": int(r["wall_acc_mJ"]),
+                        "sys": int(r["sys_acc_mJ"]),
+                        "wall_mW": int(r.get("wall_mW") or 0),
+                        "sys_mW": int(r.get("sys_mW") or 0),
+                    }
+                except (ValueError, KeyError):
+                    continue  # partial/corrupt row: skip, deltas stay safe
+
+
+def segments(rs):
+    """Yield (row, wall_mJ_delta, sys_mJ_delta, flagged) per interval."""
+    prev = None
+    for r in rs:
+        if prev is None:
+            prev = r
+            continue
+        dt = (r["ts"] - prev["ts"]).total_seconds()
+        flagged = False
+        if r["boot"] != prev["boot"]:
+            dw = ds = 0
+        else:
+            dw, ds = r["wall"] - prev["wall"], r["sys"] - prev["sys"]
+            if dw < 0 or ds < 0:
+                dw = ds = 0  # wrap or SMC reset: new segment, see docstring
+                flagged = True
+            elif dt > 0 and (dw / dt > MAX_W or ds / dt > MAX_W):
+                dw = ds = 0  # glitch: drop, don't book
+                flagged = True
+        yield r, dw, ds, flagged
+        prev = r
+
+
+def main() -> None:
+    days = int(sys.argv[1]) if len(sys.argv) > 1 else 14
+    rs = sorted(rows(), key=lambda r: r["ts"])
+    if not rs:
+        raise SystemExit("power-report: no data yet (run power-log first)")
+
+    wall_by_day = defaultdict(float)
+    sys_by_day = defaultdict(float)
+    flagged = 0
+    for r, dw, ds, f in segments(rs):
+        flagged += f
+        wall_by_day[r["ts"].date()] += dw / MWH_TO_KWH
+        sys_by_day[r["ts"].date()] += ds / MWH_TO_KWH
+
+    today = date.today()
+    span = [today - timedelta(days=i) for i in range(days - 1, -1, -1)]
+    peak = max([wall_by_day[d] for d in span] + [0.0001])
+
+    print(f"{'day':<12}{'wall kWh':>10}{'sys kWh':>10}  chart (wall)")
+    tw = ts = 0.0
+    for d in span:
+        w, s = wall_by_day[d], sys_by_day[d]
+        tw, ts = tw + w, ts + s
+        bar = "#" * max(1 if w > 0 else 0, round(w / peak * BAR_W))
+        print(f"{d.isoformat():<12}{w:>10.4f}{s:>10.4f}  {bar}")
+    print(f"{'total':<12}{tw:>10.4f}{ts:>10.4f}")
+    print(f"samples: {len(rs)}, flagged intervals dropped: {flagged}, "
+          f"since {rs[0]['ts'].date().isoformat()}")
+
+
+if __name__ == "__main__":
+    sys.exit(main())

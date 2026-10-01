@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""power-log: sample Mac power telemetry into ~/.local/share/powerlog/.
+
+Reads AppleSmartBattery PowerTelemetryData (no sudo) once and appends a row:
+  timestamp, boottime, wall_acc_mJ, sys_acc_mJ, inp_mW, sys_mW, batt_mW, wall_mW
+
+kWh comes from accumulator DELTAs in power-report, never from this script.
+Raw accumulator values are stored untouched so the divisor and wrap width
+can be revised empirically later.
+
+~45ms, ~16MB RSS per sample. Run every 60s via launchd; interval only sets
+chart resolution, not billing accuracy (the SMC integrates continuously).
+"""
+
+import csv
+import os
+import re
+import subprocess
+import sys
+import time
+from datetime import datetime
+
+DATA_DIR = os.path.expanduser("~/.local/share/powerlog")
+U64 = 1 << 64
+
+
+def fetch_blob() -> str:
+    out = subprocess.run(
+        ["ioreg", "-rn", "AppleSmartBattery", "-w0"],
+        capture_output=True, text=True, timeout=15,
+    )
+    if out.returncode != 0 or "AppleSmartBattery" not in out.stdout:
+        raise SystemExit("power-log: no AppleSmartBattery node")
+    return out.stdout
+
+
+def subdict(blob: str, name: str) -> str:
+    i = blob.find(f'"{name}"')
+    j = blob.find("{", i)
+    depth = 0
+    for k in range(j, len(blob)):
+        if blob[k] == "{":
+            depth += 1
+        elif blob[k] == "}":
+            depth -= 1
+            if depth == 0:
+                return blob[j : k + 1]
+    raise SystemExit(f"power-log: {name} block not found")
+
+
+def signed(v: int) -> int:
+    """ioreg prints u64; fold genuinely signed flows (battery, loss)."""
+    return v - U64 if v >= (1 << 63) else v
+
+
+def boot_sec() -> int:
+    out = subprocess.run(
+        ["sysctl", "-n", "kern.boottime"], capture_output=True, text=True
+    )
+    m = re.search(r"sec\s*=\s*(\d+)", out.stdout)
+    return int(m.group(1))
+
+
+def main() -> None:
+    tel = subdict(fetch_blob(), "PowerTelemetryData")
+    vals = dict(re.findall(r'"(\w+)"\s*=\s*(-?\d+)', tel))
+    raw = {k: int(v) for k, v in vals.items()}
+
+    inp = raw["SystemPowerIn"]
+    sys = max(0, raw["SystemLoad"])  # stale block can read negative at unplug
+    batt = signed(raw["BatteryPower"])
+    loss = signed(raw.get("AdapterEfficiencyLoss", 0))
+    wall = inp + loss if abs(loss) < 10_000_000 else inp
+    wall = max(0, wall)
+
+    now = datetime.now().astimezone()
+    path = os.path.join(DATA_DIR, f"power-{now.year}.csv")
+    os.makedirs(DATA_DIR, exist_ok=True)
+    new = not os.path.exists(path)
+    with open(path, "a", newline="") as f:
+        w = csv.writer(f)
+        if new:
+            w.writerow((
+                "timestamp", "boottime", "wall_acc_mJ", "sys_acc_mJ",
+                "inp_mW", "sys_mW", "batt_mW", "wall_mW",
+            ))
+        w.writerow((
+            now.isoformat(timespec="seconds"),
+            boot_sec(),
+            raw["AccumulatedWallEnergyEstimate"],
+            raw["AccumulatedSystemEnergyConsumed"],
+            inp, sys, batt, wall,
+        ))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

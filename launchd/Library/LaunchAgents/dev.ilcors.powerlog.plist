@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>dev.ilcors.powerlog</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/ilcors-dev/src/executables/power-log</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>60</integer>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/power-log.out</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/power-log.err</string>
+</dict>
+</plist>
