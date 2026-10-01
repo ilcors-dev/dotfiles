@@ -52,7 +52,7 @@ sudo stow -vv -d "$HOME/src/dotfiles" -t "/Library/Keyboard Layouts" keyboard-la
 To UNSTOW
 
 ```bash
-stow -vv -t ~ -D nvim zsh ghostty starship lazygit executables opencode git tuicr
+stow -vv -t ~ -D nvim zsh ghostty starship lazygit executables opencode git tuicr launchd
 stow --no-folding -vv -t ~ -D agents omp
 sudo stow -vv -d "$HOME/src/dotfiles" -t "/Library/Keyboard Layouts" -D keyboard-layouts
 ```

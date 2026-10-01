@@ -66,8 +66,8 @@ def main() -> None:
     vals = dict(re.findall(r'"(\w+)"\s*=\s*(-?\d+)', tel))
     raw = {k: int(v) for k, v in vals.items()}
 
-    inp = raw["SystemPowerIn"]
-    sys = max(0, raw["SystemLoad"])  # stale block can read negative at unplug
+    inp = signed(raw["SystemPowerIn"])  # negative-wrapped when on battery
+    sys = max(0, signed(raw["SystemLoad"]))  # stale block can read negative at unplug
     batt = signed(raw["BatteryPower"])
     loss = signed(raw.get("AdapterEfficiencyLoss", 0))
     wall = inp + loss if abs(loss) < 10_000_000 else inp
