@@ -400,58 +400,6 @@ map("n", "<leader>ot", function()
 end, { desc = "[O]pen Terminal" })
 map("n", "<leader>ol", open_lazygit, { desc = "[O]pen: Lazygit" })
 
--- require("vercel").setup({
--- 	transparent = false,
--- 	styles = {
--- 		comments = { italic = true },
--- 		keywords = { bold = true },
--- 	},
--- })
---
--- require("onedark").setup({
--- 	style = "light",
--- 	transparent = false,
--- 	code_style = {
--- 		comments = "italic",
--- 	},
--- })
-
-local function set_dark_theme()
-	vim.o.background = "dark"
-	vim.cmd.colorscheme("circadia")
-end
-
-local function set_light_theme()
-	vim.o.background = "light"
-	vim.cmd.colorscheme("circadia")
-end
-
-vim.api.nvim_create_user_command("ThemeDark", set_dark_theme, {
-	desc = "Switch to dark theme",
-})
-
-vim.api.nvim_create_user_command("ThemeLight", set_light_theme, {
-	desc = "Switch to light theme",
-})
-
-vim.api.nvim_create_user_command("ThemeToggle", function()
-	if vim.o.background == "dark" then
-		set_light_theme()
-		return
-	end
-
-	set_dark_theme()
-end, {
-	desc = "Toggle between dark and light themes",
-})
-
-require("auto-dark-mode").setup({
-	update_interval = 1000,
-	set_dark_mode = set_dark_theme,
-	set_light_mode = set_light_theme,
-})
-require("auto-dark-mode").init()
-
 require("todo-comments").setup({ signs = false })
 
 require("mini.ai").setup({ n_lines = 500 })

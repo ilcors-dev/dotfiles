@@ -26,7 +26,6 @@ vim.pack.add({
 	gh("MunifTanjim/nui.nvim"),
 	gh("WhoIsSethDaniel/mason-tool-installer.nvim"),
 	gh("echasnovski/mini.nvim"),
-	gh("f-person/auto-dark-mode.nvim"),
 	gh("folke/lazydev.nvim"),
 	gh("Amansingh-afk/milli.nvim"),
 	gh("folke/snacks.nvim"),
@@ -41,7 +40,6 @@ vim.pack.add({
 	gh("mason-org/mason-lspconfig.nvim"),
 	gh("mason-org/mason.nvim"),
 	gh("mfussenegger/nvim-lint"),
-	-- gh("navarasu/onedark.nvim"),
 	gh("neovim/nvim-lspconfig"),
 	gh("nvim-lua/plenary.nvim"),
 	gh("nvim-neo-tree/neo-tree.nvim"),
@@ -52,6 +50,3 @@ vim.pack.add({
 	gh("stevearc/conform.nvim"),
 	gh("windwp/nvim-autopairs"),
 }, { confirm = false, load = true })
-
--- circadia's Neovim port is nested in a monorepo; vim.pack has no rtp option
-vim.opt.rtp:append(vim.fs.joinpath(vim.fn.stdpath("data"), "site", "pack", "core", "opt", "circadia", "ports", "neovim"))

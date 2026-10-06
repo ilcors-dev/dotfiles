@@ -26,7 +26,9 @@ vim.opt.guicursor = {
 }
 vim.o.scrolloff = 10
 vim.o.confirm = true
-vim.o.termguicolors = true
+-- Draw with the terminal's 16-color ANSI palette instead of 24-bit RGB so
+-- Neovim follows whatever theme the terminal is using.
+vim.o.termguicolors = false
 
 vim.o.tabstop = 2
 vim.o.softtabstop = 2

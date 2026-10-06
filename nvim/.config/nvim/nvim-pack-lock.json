@@ -4,18 +4,10 @@
       "rev": "a62e1083a3cfe8b6b206e7d3d33a51091df25357",
       "src": "https://github.com/L3MON4D3/LuaSnip"
     },
-    "auto-dark-mode.nvim": {
-      "rev": "54058b4fe414bd64bd2904a6f8a63f1f14e3d8df",
-      "src": "https://github.com/f-person/auto-dark-mode.nvim"
-    },
     "blink.cmp": {
       "rev": "78336bc89ee5365633bcf754d93df01678b5c08f",
       "src": "https://github.com/saghen/blink.cmp",
       "version": "1.0.0 - 2.0.0"
-    },
-    "circadia": {
-      "rev": "b321050e79e3eda8a4a4d34d0bb1024961611e6a",
-      "src": "https://github.com/tanmaymanojgandhi/circadia"
     },
     "conform.nvim": {
       "rev": "086a40dc7ed8242c03be9f47fbcee68699cc2395",
@@ -95,10 +87,6 @@
       "rev": "c72328a5494b4502947a022fe69c0c47e53b6aa6",
       "src": "https://github.com/nvim-tree/nvim-web-devicons"
     },
-    "onedark.nvim": {
-      "rev": "df4792accde9db0043121f32628bcf8e645d9aea",
-      "src": "https://github.com/navarasu/onedark.nvim"
-    },
     "plenary.nvim": {
       "rev": "74b06c6c75e4eeb3108ec01852001636d85a932b",
       "src": "https://github.com/nvim-lua/plenary.nvim"
@@ -114,10 +102,6 @@
     "venv-selector.nvim": {
       "rev": "bcb2f58533c59b01565285eba49693f00bc460f5",
       "src": "https://github.com/linux-cultist/venv-selector.nvim"
-    },
-    "vercel.nvim": {
-      "rev": "7551ac6af9afbb9f78c8edd8599fbfad0956952a",
-      "src": "https://github.com/tiesen243/vercel.nvim"
     },
     "which-key.nvim": {
       "rev": "3aab2147e74890957785941f0c1ad87d0a44c15a",

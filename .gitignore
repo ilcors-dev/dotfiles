@@ -3,3 +3,4 @@
 /lazygit/Library/Application Support/lazygit/state.yml
 __pycache__/
 *.pyc
+/omp/.omp/agent/config.yml.lock
