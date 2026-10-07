@@ -30,6 +30,16 @@ vim.o.confirm = true
 -- Neovim follows whatever theme the terminal is using.
 vim.o.termguicolors = false
 
+-- No permanent command-line row: the cmdline only appears while typing a
+-- command, and messages go to ui2's ephemeral floating message window.
+vim.o.cmdheight = 0
+require("vim._core.ui2").enable({
+	msg = {
+		targets = "msg",
+		msg = { timeout = 4000 },
+	},
+})
+
 vim.o.tabstop = 2
 vim.o.softtabstop = 2
 vim.o.shiftwidth = 2
