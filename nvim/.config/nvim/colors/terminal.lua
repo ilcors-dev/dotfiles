@@ -1,0 +1,195 @@
+-- A 16-color scheme that follows the terminal palette (requires
+-- 'notermguicolors'). It colors foregrounds only and uses `reverse` where a
+-- background is needed, so it stays readable regardless of what the terminal
+-- assigns to slots 0/7/8/15, in both light and dark palettes.
+--
+-- ANSI roles: 1 red, 2 green, 3 yellow, 4 blue, 5 magenta, 6 cyan, 8 grey;
+-- 9-14 are the bright variants of 1-6.
+
+vim.cmd.highlight("clear")
+vim.g.colors_name = "terminal"
+
+local dark = vim.o.background == "dark"
+-- Slot 0 is a near-background shade in the dark palette and usable as a subtle
+-- panel background; the light palette maps it to ink, so panels go bare there.
+local panel = dark and { ctermbg = 0 } or {}
+
+local hl = {
+	-- Editor chrome
+	Normal = {},
+	NormalNC = {},
+	NormalFloat = panel,
+	FloatBorder = { ctermfg = 8 },
+	FloatTitle = { ctermfg = 4, bold = true },
+	SignColumn = {},
+	LineNr = { ctermfg = 8 },
+	CursorLineNr = { ctermfg = 3, bold = true },
+	CursorLine = panel,
+	CursorColumn = panel,
+	ColorColumn = panel,
+	NonText = { ctermfg = 8 },
+	Whitespace = { ctermfg = 8 },
+	EndOfBuffer = { ctermfg = 8 },
+	SpecialKey = { ctermfg = 8 },
+	Conceal = { ctermfg = 8 },
+	WinSeparator = { ctermfg = 8 },
+	Folded = { ctermfg = 8, italic = true },
+	FoldColumn = { ctermfg = 8 },
+	Visual = { reverse = true },
+	VisualNOS = { reverse = true },
+	Search = { ctermfg = 3, reverse = true },
+	CurSearch = { ctermfg = 11, reverse = true, bold = true },
+	IncSearch = { link = "CurSearch" },
+	Substitute = { link = "Search" },
+	MatchParen = { ctermfg = 3, bold = true, underline = true },
+	QuickFixLine = { bold = true },
+	Directory = { ctermfg = 4 },
+	Title = { ctermfg = 4, bold = true },
+	Question = { ctermfg = 2 },
+	MoreMsg = { ctermfg = 2 },
+	ModeMsg = { bold = true },
+	ErrorMsg = { ctermfg = 1 },
+	WarningMsg = { ctermfg = 3 },
+	Todo = { ctermfg = 3, bold = true },
+	Error = { ctermfg = 1, bold = true },
+
+	Pmenu = panel,
+	PmenuSel = { reverse = true },
+	PmenuSbar = {},
+	PmenuThumb = { reverse = true },
+	WildMenu = { link = "PmenuSel" },
+
+	StatusLine = { ctermfg = 8, reverse = true },
+	StatusLineNC = { ctermfg = 8 },
+	TabLine = { ctermfg = 8 },
+	TabLineSel = { bold = true },
+	TabLineFill = {},
+
+	-- Syntax
+	Comment = { ctermfg = 8, italic = true },
+	Constant = { ctermfg = 3 },
+	String = { ctermfg = 2 },
+	Character = { ctermfg = 2 },
+	Number = { ctermfg = 3 },
+	Float = { ctermfg = 3 },
+	Boolean = { ctermfg = 3 },
+	Identifier = {},
+	Function = { ctermfg = 4 },
+	Statement = { ctermfg = 5 },
+	Keyword = { ctermfg = 5 },
+	Conditional = { ctermfg = 5 },
+	Repeat = { ctermfg = 5 },
+	Label = { ctermfg = 5 },
+	Exception = { ctermfg = 5 },
+	Operator = {},
+	PreProc = { ctermfg = 13 },
+	Include = { ctermfg = 13 },
+	Define = { ctermfg = 13 },
+	Macro = { ctermfg = 13 },
+	PreCondit = { ctermfg = 13 },
+	Type = { ctermfg = 6 },
+	StorageClass = { ctermfg = 6 },
+	Structure = { ctermfg = 6 },
+	Typedef = { ctermfg = 6 },
+	Special = { ctermfg = 9 },
+	SpecialChar = { ctermfg = 9 },
+	Tag = { ctermfg = 4 },
+	Delimiter = {},
+	SpecialComment = { ctermfg = 8, bold = true },
+	Debug = { ctermfg = 9 },
+	Underlined = { underline = true },
+
+	-- Treesitter (anything not listed inherits the standard group above)
+	["@variable"] = {},
+	["@variable.builtin"] = { ctermfg = 1 },
+	["@variable.parameter"] = {},
+	["@variable.member"] = { ctermfg = 6 },
+	["@property"] = { ctermfg = 6 },
+	["@constant.builtin"] = { ctermfg = 3 },
+	["@module"] = { ctermfg = 6 },
+	["@type.builtin"] = { ctermfg = 14 },
+	["@function.builtin"] = { ctermfg = 12 },
+	["@function.macro"] = { ctermfg = 12 },
+	["@constructor"] = { ctermfg = 4 },
+	["@attribute"] = { ctermfg = 13 },
+	["@punctuation"] = {},
+	["@punctuation.special"] = { ctermfg = 9 },
+	["@string.escape"] = { ctermfg = 9 },
+	["@string.special"] = { ctermfg = 9 },
+	["@string.regexp"] = { ctermfg = 9 },
+	["@tag"] = { ctermfg = 4 },
+	["@tag.attribute"] = { ctermfg = 6 },
+	["@tag.delimiter"] = { ctermfg = 8 },
+	["@markup.heading"] = { ctermfg = 4, bold = true },
+	["@markup.strong"] = { bold = true },
+	["@markup.italic"] = { italic = true },
+	["@markup.strikethrough"] = { strikethrough = true },
+	["@markup.underline"] = { underline = true },
+	["@markup.link"] = { ctermfg = 4 },
+	["@markup.link.url"] = { ctermfg = 4, underline = true },
+	["@markup.link.label"] = { ctermfg = 6 },
+	["@markup.raw"] = { ctermfg = 2 },
+	["@markup.list"] = { ctermfg = 5 },
+	["@markup.quote"] = { ctermfg = 8, italic = true },
+
+	-- Diagnostics / LSP
+	DiagnosticError = { ctermfg = 1 },
+	DiagnosticWarn = { ctermfg = 3 },
+	DiagnosticInfo = { ctermfg = 4 },
+	DiagnosticHint = { ctermfg = 6 },
+	DiagnosticOk = { ctermfg = 2 },
+	DiagnosticUnderlineError = { ctermfg = 1, underline = true },
+	DiagnosticUnderlineWarn = { ctermfg = 3, underline = true },
+	DiagnosticUnderlineInfo = { underline = true },
+	DiagnosticUnderlineHint = { underline = true },
+	LspReferenceText = { underline = true },
+	LspReferenceRead = { underline = true },
+	LspReferenceWrite = { underline = true, bold = true },
+	LspInlayHint = { ctermfg = 8, italic = true },
+	LspCodeLens = { ctermfg = 8 },
+
+	-- Diff / git
+	Added = { ctermfg = 2 },
+	Changed = { ctermfg = 3 },
+	Removed = { ctermfg = 1 },
+	DiffAdd = { ctermfg = 2, reverse = true },
+	DiffChange = { ctermfg = 3, reverse = true },
+	DiffText = { ctermfg = 11, reverse = true, bold = true },
+	DiffDelete = { ctermfg = 1 },
+
+	-- Plugins
+	MiniStatuslineModeNormal = { ctermfg = 4, reverse = true, bold = true },
+	MiniStatuslineModeInsert = { ctermfg = 2, reverse = true, bold = true },
+	MiniStatuslineModeVisual = { ctermfg = 5, reverse = true, bold = true },
+	MiniStatuslineModeReplace = { ctermfg = 1, reverse = true, bold = true },
+	MiniStatuslineModeCommand = { ctermfg = 3, reverse = true, bold = true },
+	MiniStatuslineModeOther = { ctermfg = 6, reverse = true, bold = true },
+	MiniStatuslineDevinfo = { link = "StatusLine" },
+	MiniStatuslineFileinfo = { link = "StatusLine" },
+	MiniStatuslineFilename = { link = "StatusLineNC" },
+	MiniStatuslineInactive = { link = "StatusLineNC" },
+
+	SnacksDashboardHeader = { ctermfg = 4 },
+	SnacksDashboardKey = { ctermfg = 3 },
+	SnacksDashboardIcon = { ctermfg = 6 },
+	SnacksDashboardDesc = {},
+	SnacksPickerDir = { ctermfg = 8 },
+	SnacksPickerMatch = { ctermfg = 3, bold = true },
+	SnacksIndent = { ctermfg = 8 },
+	SnacksIndentScope = { ctermfg = 4 },
+
+	WhichKey = { ctermfg = 4 },
+	WhichKeyGroup = { ctermfg = 5 },
+	WhichKeyDesc = {},
+	WhichKeySeparator = { ctermfg = 8 },
+
+	NeoTreeDirectoryName = { ctermfg = 4 },
+	NeoTreeDirectoryIcon = { ctermfg = 4 },
+	NeoTreeRootName = { ctermfg = 5, bold = true },
+	NeoTreeDimmed = { ctermfg = 8 },
+	NeoTreeDotfile = { ctermfg = 8 },
+}
+
+for name, attrs in pairs(hl) do
+	vim.api.nvim_set_hl(0, name, attrs)
+end

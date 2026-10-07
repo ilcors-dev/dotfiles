@@ -27,8 +27,11 @@ vim.opt.guicursor = {
 vim.o.scrolloff = 10
 vim.o.confirm = true
 -- Draw with the terminal's 16-color ANSI palette instead of 24-bit RGB so
--- Neovim follows whatever theme the terminal is using.
+-- Neovim follows whatever theme the terminal is using. 'background' is set
+-- from the terminal's OSC 11 reply before this runs; the scheme re-applies
+-- itself whenever 'background' changes.
 vim.o.termguicolors = false
+vim.cmd.colorscheme("terminal")
 
 -- No permanent command-line row: the cmdline only appears while typing a
 -- command, and messages go to ui2's ephemeral floating message window.
