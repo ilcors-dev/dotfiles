@@ -33,6 +33,7 @@ vim.o.termguicolors = false
 -- No permanent command-line row: the cmdline only appears while typing a
 -- command, and messages go to ui2's ephemeral floating message window.
 vim.o.cmdheight = 0
+vim.o.showcmdloc = "statusline"
 require("vim._core.ui2").enable({
 	msg = {
 		targets = "msg",

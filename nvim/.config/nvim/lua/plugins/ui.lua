@@ -451,7 +451,7 @@ statusline.setup({
 				{ hl = "MiniStatuslineFilename", strings = buffers },
 				"%=",
 				{ hl = "MiniStatuslineFileinfo", strings = { fileinfo } },
-				{ hl = mode_hl, strings = { search, location } },
+				{ hl = mode_hl, strings = { "%S", search, location } },
 			})
 		end,
 	},

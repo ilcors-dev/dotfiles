@@ -15,6 +15,12 @@ shell-integration-features = no-cursor
 
 window-inherit-font-size = false
 
+# The window height is rarely a whole number of cells; split the leftover
+# between top and bottom and paint it with the nearest row's background so
+# Neovim's statusline doesn't float above a bare strip.
+window-padding-balance = true
+window-padding-color = extend
+
 custom-shader = shaders/cursor_warp.glsl
 cursor-color = #FD022D
 
