@@ -76,7 +76,7 @@ Cover the applicable questions:
 - Separate `Fact`, `Assumption`, `Forecast`, and `Open question` whenever the distinction matters.
 - Use measurable, customer-observable language. Replace vague claims such as "seamless" or "best-in-class" with the effect, condition, and measure.
 - Use active voice, present tense for current state, and future-perfect launch language only in the press release.
-- Preserve defined terms. Define abbreviations on first use.
+- Write the prose with the `write-docs` skill. It defines the sentence rules, acronym rules, and edit passes.
 - Do not produce a technical specification, delivery plan, architecture document, or code walkthrough. Those follow only after the PR/FAQ decision.
 - Do not make unsupported claims about market size, customer demand, cost, compliance, performance, or outcomes.
 

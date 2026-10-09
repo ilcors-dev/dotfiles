@@ -1,0 +1,4 @@
+interface:
+  display_name: "Document Writing"
+  short_description: "Write and review reader-first documents"
+  default_prompt: "Use $write-docs to write a clear, evidence-backed document for teammates."

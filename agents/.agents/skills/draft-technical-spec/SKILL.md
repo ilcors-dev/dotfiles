@@ -51,17 +51,9 @@ Target 1,400–2,200 words excluding diagrams, tables, and references. Treat 2,5
 
 Move inventories, exhaustive API estimates, and research notes to linked documents. Keep only information that changes the decision or implementation.
 
-## ASD-STE100-style writing
+## Writing
 
-Write in clear controlled English. Use the official ASD-STE100 dictionary or checker when the user provides one.
-
-- Use active voice and present tense for descriptions.
-- Keep one topic in each descriptive sentence. Keep descriptive sentences to 25 words or fewer.
-- Write implementation actions in the imperative form. Keep each procedural sentence to 20 words or fewer. Give one action per sentence unless the actions occur together.
-- Use a stable technical term for one concept. Define abbreviations on first use.
-- Prefer concrete verbs and nouns. Avoid idioms, phrasal verbs, vague qualifiers, and marketing language.
-- Do not use contractions. Use vertical lists to separate conditions, options, and steps.
-- Preserve code identifiers, API values, and quoted product text exactly. Treat them as technical terms, not prose to simplify.
+Write the prose with the `write-docs` skill. It defines the ASD-STE100 sentence rules, the evidence rules, and the edit passes.
 
 ## Quality gate
 
@@ -81,7 +73,3 @@ Before delivery, verify that the specification answers all applicable questions:
 - What tests and rollout checks prove the change?
 
 Remove repeated decisions, unsupported claims, speculative implementation detail, and generic background. Finish with a concise references list.
-
-## General rules
-
-- Do not state the writing style used anywhere. Apply it without naming it.
