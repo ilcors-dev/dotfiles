@@ -37,14 +37,15 @@ The `opencode` package installs the tracked global configuration, local plugins,
 and their dependency manifest. On first startup, OpenCode installs the npm
 plugins from `opencode.json`.
 
-The `omp` package links only `~/.omp/agent/config.yml` and
-`~/.omp/agent/AGENTS.md`; `--no-folding` keeps sessions, databases, and logs
-out of the repository. omp writes `/settings` changes through the link, so they
-show up as diffs here. `AGENTS.md` holds the user-level instructions for every
-omp session and imports the response rules from the `write-docs` skill, so
-stow `agents` together with `omp`. `bootstrap.sh` installs omp with Bun, the
-rtk extension, and the `pi-rtk-optimizer` plugin. `omp/.stow-local-ignore`
-keeps omp's untracked `config.yml.lock` out of the stow.
+The `omp` package links `~/.omp/agent/config.yml`, `~/.omp/agent/AGENTS.md`,
+and `~/.omp/agent/writer.md`; `--no-folding` keeps sessions, databases, and
+logs out of the repository. omp writes `/settings` changes through the link, so
+they show up as diffs here. `AGENTS.md` holds the user-level instructions for
+every omp session and subagent; it imports `writer.md`, which imports the
+`write-docs` skill from `agents`, so stow `agents` together with `omp`.
+`bootstrap.sh` installs omp with Bun, the rtk extension, and the
+`pi-rtk-optimizer` plugin. `omp/.stow-local-ignore` keeps omp's untracked
+`config.yml.lock` out of the stow.
 Provider logins and MCP OAuth tokens live in `~/.omp/agent/agent.db` and are
 not tracked: run `/login` after restoring.
 

@@ -7,7 +7,7 @@ description: Write, edit, or review documents that people read, such as design d
 
 A document lets readers think and decide without the author in the room. Write for the reader, not for yourself. Make the document as short as possible and as long as necessary.
 
-Use this skill for the prose of every document. When a document type has its own skill, that skill owns the structure and this skill owns the writing. For example, `draft-technical-spec` owns specification structure and `prfaq` owns PR/FAQ structure. When a rule here conflicts with a rule in the document-type skill, the document-type skill wins.
+Apply these rules to the prose of every document. When a document type has its own skill, that skill owns the structure and these rules own the writing. For example, `draft-technical-spec` owns specification structure and `prfaq` owns PR/FAQ structure. When a rule here conflicts with a rule in the document-type skill, the document-type skill wins.
 
 ## Workflow
 
@@ -15,7 +15,7 @@ Use this skill for the prose of every document. When a document type has its own
 2. **Analyze the reader.** Identify who reads the document, what they already know, and where they will disagree. Use this analysis to decide how much context to give.
 3. **Gather evidence before you write.** Read the code, tickets, data, and earlier documents on the topic. Separate facts from assumptions. Do not invent numbers, dates, names, or results.
 4. **Outline.** Write the headings and one topic sentence for each section. Put a placeholder such as `[X: p95 latency, source needed]` where data is missing. Check that the outline leads to the conclusion.
-5. **Draft.** Apply the structure, format, and evidence rules below. Apply the sentence rules in [references/plain-english.md](references/plain-english.md).
+5. **Draft.** Apply the structure, format, and evidence rules below. Apply the sentence rules in [Plain English rules](#plain-english-rules).
 6. **Edit.** Use the passes in [Edit](#edit). Remove each sentence that does not help the reader decide or act.
 7. **Report.** In the chat, list the open placeholders, the assumptions, and the questions that the user must answer.
 
@@ -84,7 +84,7 @@ Edit in four passes. Each pass has one goal.
 
 1. **Content.** Read the document as the most hostile stakeholder. For each section, ask: Do I believe this? What argument or data is missing? Where can a reader disagree?
 2. **Flow.** Read only the first sentence of each section and paragraph. These sentences must tell the full story in order.
-3. **Sentences.** Check each sentence against [references/plain-english.md](references/plain-english.md) and the word-choice table. Split each sentence that is longer than the limit.
+3. **Sentences.** Check each sentence against [Plain English rules](#plain-english-rules) and the word-choice table. Split each sentence that is longer than the limit.
 4. **Mechanics.** Check spelling, grammar, terms, acronyms, links, appendix references, and numbers that appear more than once.
 
 Before delivery, answer the quality gate:
@@ -108,6 +108,25 @@ When the user asks for a review, give feedback. Do not rewrite the document unle
 
 ## Rules for agents
 
-- Do not name the writing style or this skill in the document. Apply the rules without comment.
+- Do not name the writing style or these rules in the document. Apply the rules without comment.
 - Do not fill gaps with plausible content. Use a placeholder and report it.
 - Follow the template or house style of the repository when it conflicts with the format rules here. The sentence and evidence rules still apply.
+
+## Plain English rules
+
+These rules follow ASD-STE100 Simplified Technical English. Apply them to responses and to documents. Use the official ASD-STE100 dictionary or checker when the user provides one.
+
+- Make instructions as clear and specific as possible.
+- Do not write multi-word nouns that have more than three words.
+- Do not use auxiliary verbs to make complex verb constructions. Write "the job fails", not "the job would have been failing".
+- Use the active voice instead of the passive voice as much as possible. Say who does what. If you can add "by zombies" after the verb, the sentence is passive.
+- Use the present tense for descriptions, unless a document-type skill requires another tense. Write instructions in the imperative form.
+- Write short sentences: no more than 20 words in instructions (procedures) and 25 words in descriptive text.
+- Do not omit parts of the sentence, such as the verb, the subject, or the article, to make the text shorter.
+- Use vertical lists for complex text.
+- Write one instruction per sentence.
+- Write only one topic per paragraph. Start the paragraph with the sentence that states the topic.
+- Do not write more than six sentences in each paragraph.
+- Use one term for one concept. Do not change the term for variety.
+- Use concrete verbs and nouns. Do not use idioms, phrasal verbs, or contractions.
+- Keep code identifiers, commands, API values, and quoted text exactly as they are. These rules do not apply to them.
