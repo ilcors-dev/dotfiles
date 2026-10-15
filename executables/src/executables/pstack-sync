@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+"""pstack-sync: track pstack from cursor/plugins and build an omp copy of its skills.
+
+Upstream checkout: ~/.local/share/pstack/upstream (sparse clone of pstack/, never edited).
+omp skills:        ~/.local/share/pstack/skills (rebuilt on every run, loaded through
+                   skills.customDirectories in ~/.omp/agent/config.yml).
+
+The build changes frontmatter only:
+- `name` becomes the directory slug, because omp addresses skills by `name` and two
+  upstream skills use display names ("Poteto Mode", "Make Bot UI").
+- Skills that use Cursor tools, paths, or models get one line that points to the
+  `pstack-omp` skill, which maps them to omp.
+- agents/comment-sicko.md becomes the hidden skill `pstack-comment-sicko`, which the
+  omp `comment-sicko` agent autoloads.
+"""
+
+from __future__ import annotations
+
+import fcntl
+import json
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = "https://github.com/cursor/plugins.git"
+ROOT = Path.home() / ".local/share/pstack"
+UPSTREAM = ROOT / "upstream"
+PSTACK = UPSTREAM / "pstack"
+OUT = ROOT / "skills"
+
+# setup-pstack writes a Cursor rule (pstack-omp replaces it); make-bot-ui drives Grok Bot webhooks.
+EXCLUDED = {"setup-pstack", "make-bot-ui"}
+# The omp agents and private overlay skills link these paths; a rename upstream must
+# fail the sync and keep the previous build, not leave broken links.
+REQUIRED = [
+    "poteto-mode/SKILL.md",
+    "poteto-mode/playbooks/bug-fix.md",
+    "poteto-mode/playbooks/feature.md",
+    "poteto-mode/playbooks/refactoring.md",
+    "poteto-mode/playbooks/multi-phase-plan.md",
+    "poteto-mode/references/bugbot-triage.md",
+    "pstack-comment-sicko/SKILL.md",
+    *(f"{name}/SKILL.md" for name in (
+        "tdd", "architect", "interrogate", "no-comments", "blast-radius", "how", "why", "teach",
+        "create-verification-skill", "principle-fix-root-causes", "principle-attack-the-premise",
+        "principle-model-the-domain", "principle-subtract-before-you-add",
+        "principle-sequence-verifiable-units",
+    )),
+]
+
+CURSOR_MARKERS = re.compile(
+    r"subagent_type|\bTask\b|AskQuestion|readonly|\.cursor/|pstack-models|/loop\b|cursor-team-kit"
+    r"|control-ui|control-cli|\bdeslop\b|grok-|claude-opus"
+)
+POINTER = (
+    "> Running in omp: read `skill://pstack-omp` before you act. It maps the Cursor tools, "
+    "paths, and models in this skill to omp."
+)
+FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n", re.S)
+
+
+def git(*args: str, cwd: Path | None = None) -> str:
+    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+
+
+def update_upstream() -> None:
+    if not (UPSTREAM / ".git").exists():
+        ROOT.mkdir(parents=True, exist_ok=True)
+        git("clone", "--quiet", "--depth", "1", "--filter=blob:none", "--sparse", REPO, str(UPSTREAM))
+        git("sparse-checkout", "set", "pstack", cwd=UPSTREAM)
+        return
+    git("fetch", "--quiet", "--depth", "1", "origin", "main", cwd=UPSTREAM)
+    git("reset", "--quiet", "--hard", "FETCH_HEAD", cwd=UPSTREAM)
+
+
+def split(path: Path) -> tuple[list[str], str]:
+    text = path.read_text()
+    match = FRONTMATTER.match(text)
+    if match is None:
+        sys.exit(f"pstack-sync: {path} has no frontmatter")
+    return match.group(1).split("\n"), text[match.end():]
+
+
+def document(frontmatter: list[str], body: str, pointer: bool) -> str:
+    head = "---\n" + "\n".join(frontmatter) + "\n---\n"
+    return f"{head}\n{POINTER}\n{body}" if pointer else head + body
+
+
+def uses_cursor(skill_dir: Path) -> bool:
+    return any(CURSOR_MARKERS.search(path.read_text()) for path in skill_dir.rglob("*.md"))
+
+
+def build(dest: Path) -> list[str]:
+    names = []
+    for skill_dir in sorted((PSTACK / "skills").iterdir()):
+        skill_md = skill_dir / "SKILL.md"
+        if not skill_md.is_file() or skill_dir.name in EXCLUDED:
+            continue
+        target = dest / skill_dir.name
+        shutil.copytree(skill_dir, target)
+        frontmatter, body = split(skill_md)
+        frontmatter = [f"name: {skill_dir.name}", *(line for line in frontmatter if not line.startswith("name:"))]
+        (target / "SKILL.md").write_text(document(frontmatter, body, uses_cursor(skill_dir)))
+        names.append(skill_dir.name)
+
+    _, body = split(PSTACK / "agents/comment-sicko.md")
+    target = dest / "pstack-comment-sicko"
+    target.mkdir()
+    frontmatter = [
+        "name: pstack-comment-sicko",
+        "description: Comment Sicko persona from pstack. The omp comment-sicko agent loads it.",
+        "hide: true",
+    ]
+    (target / "SKILL.md").write_text(document(frontmatter, body, False))
+    names.append(target.name)
+    return names
+
+
+def sync() -> None:
+    update_upstream()
+    staging = ROOT / "skills.new"
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True)
+    names = build(staging)
+    missing = [path for path in REQUIRED if not (staging / path).is_file()]
+    if missing:
+        shutil.rmtree(staging)
+        sys.exit(f"pstack-sync: upstream no longer ships {missing}; update the agents and skills that link them")
+
+    previous = ROOT / "skills.old"
+    shutil.rmtree(previous, ignore_errors=True)
+    if OUT.exists():
+        OUT.rename(previous)
+    staging.rename(OUT)
+    shutil.rmtree(previous, ignore_errors=True)
+
+    # Skills link `../../README.md` and `../../docs/...`, which resolve to ROOT.
+    for name in ("README.md", "docs"):
+        link = ROOT / name
+        if not link.is_symlink():
+            link.symlink_to(PSTACK / name)
+
+    version = json.loads((PSTACK / "plugin.json").read_text())["version"]
+    commit = git("rev-parse", "--short", "HEAD", cwd=UPSTREAM)
+    print(f"pstack {version} ({commit}): {len(names)} skills in {OUT}")
+
+
+def main() -> None:
+    # A manual run and the launchd run share the checkout and the staging directories.
+    ROOT.mkdir(parents=True, exist_ok=True)
+    with open(ROOT / ".lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        sync()
+
+
+if __name__ == "__main__":
+    main()

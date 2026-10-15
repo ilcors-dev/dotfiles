@@ -38,7 +38,8 @@ and their dependency manifest. On first startup, OpenCode installs the npm
 plugins from `opencode.json`.
 
 The `omp` package links `~/.omp/agent/config.yml`, `~/.omp/agent/AGENTS.md`,
-and `~/.omp/agent/writer.md`; `--no-folding` keeps sessions, databases, and
+`~/.omp/agent/writer.md`, and the pstack agents and skill in `~/.omp/agent/agents/`
+and `~/.omp/agent/skills/`; `--no-folding` keeps sessions, databases, and
 logs out of the repository. omp writes `/settings` changes through the link, so
 they show up as diffs here. `AGENTS.md` holds the user-level instructions for
 every omp session and subagent; it imports `writer.md`, which imports the
@@ -48,6 +49,22 @@ every omp session and subagent; it imports `writer.md`, which imports the
 `config.yml.lock` out of the stow.
 Provider logins and MCP OAuth tokens live in `~/.omp/agent/agent.db` and are
 not tracked: run `/login` after restoring.
+
+`pstack-sync` (in `executables`) installs [pstack](https://github.com/cursor/plugins/tree/main/pstack)
+for omp. It keeps a sparse clone of `cursor/plugins` in `~/.local/share/pstack/upstream`
+and rebuilds `~/.local/share/pstack/skills`, which `skills.customDirectories` loads.
+The build changes only frontmatter: each `name` becomes its directory slug, and
+skills that use Cursor tools get a pointer to the `pstack-omp` skill
+(`omp/.omp/agent/skills/`), which maps Cursor tools, paths, and models to omp.
+`setup-pstack` and `make-bot-ui` are left out because they only work in Cursor.
+The pstack skills are hidden from the model's skill list; start them with
+`/skill:poteto-mode` or another `/skill:` command.
+Subagents are multi-model: the agents in `omp/.omp/agent/agents/` use the
+`pstack-opus` and `pstack-gpt` roles in `modelRoles`. Where pstack names Grok,
+omp uses `pstack-gpt`. Both roles use `auto` thinking, and `task.enableEffort`
+lets a pstack spawn raise or lower it. `launchd` installs `dev.ilcors.pstack-sync.plist`, which
+runs the sync at load and daily at 09:00 (log in `/tmp/pstack-sync.{out,err}`).
+Enable with `launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/dev.ilcors.pstack-sync.plist`.
 
 Optional private configuration can provide `~/.zsh/local.zsh` and
 `~/.config/local-nvim-work.lua`. The public packages work without them.
