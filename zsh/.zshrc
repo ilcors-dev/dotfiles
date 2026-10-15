@@ -57,7 +57,8 @@ if [ -f '/Users/ilcors-dev/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/ilco
 
 if [ -f '/Users/ilcors-dev/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/ilcors-dev/google-cloud-sdk/completion.zsh.inc'; fi
 
-alias n="nvim ."
+n() { if (( $# )); then nvim "$@"; else nvim .; fi }
+alias l="lazygit"
 
 # bun completions
 [ -s "/Users/ilcors-dev/.bun/_bun" ] && source "/Users/ilcors-dev/.bun/_bun"
