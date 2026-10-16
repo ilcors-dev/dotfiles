@@ -38,8 +38,8 @@ and their dependency manifest. On first startup, OpenCode installs the npm
 plugins from `opencode.json`.
 
 The `omp` package links `~/.omp/agent/config.yml`, `~/.omp/agent/AGENTS.md`,
-`~/.omp/agent/writer.md`, and the pstack agents and skill in `~/.omp/agent/agents/`
-and `~/.omp/agent/skills/`; `--no-folding` keeps sessions, databases, and
+`~/.omp/agent/writer.md`, and the pstack skill in `~/.omp/agent/skills/`;
+`--no-folding` keeps sessions, databases, and
 logs out of the repository. omp writes `/settings` changes through the link, so
 they show up as diffs here. `AGENTS.md` holds the user-level instructions for
 every omp session and subagent; it imports `writer.md`, which imports the
@@ -59,10 +59,10 @@ skills that use Cursor tools get a pointer to the `pstack-omp` skill
 `setup-pstack` and `make-bot-ui` are left out because they only work in Cursor.
 The pstack skills are hidden from the model's skill list; start them with
 `/skill:poteto-mode` or another `/skill:` command.
-Subagents are multi-model: the agents in `omp/.omp/agent/agents/` use the
-`pstack-opus` and `pstack-gpt` roles in `modelRoles`. Where pstack names Grok,
-omp uses `pstack-gpt`. Both roles use `auto` thinking, and `task.enableEffort`
-lets a pstack spawn raise or lower it. `launchd` installs `dev.ilcors.pstack-sync.plist`, which
+pstack subagents use omp's bundled agents: `task` writes code, and `reviewer`
+runs read-only work on GPT through `task.agentModelOverrides`. Tag models with
+`^` for code work on two families. `task.enableEffort` lets a pstack spawn raise
+or lower `auto` thinking. `launchd` installs `dev.ilcors.pstack-sync.plist`, which
 runs the sync at load and daily at 09:00 (log in `/tmp/pstack-sync.{out,err}`).
 Enable with `launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/dev.ilcors.pstack-sync.plist`.
 

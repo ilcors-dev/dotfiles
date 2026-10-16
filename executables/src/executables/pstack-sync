@@ -10,8 +10,8 @@ The build changes frontmatter only:
   upstream skills use display names ("Poteto Mode", "Make Bot UI").
 - Skills that use Cursor tools, paths, or models get one line that points to the
   `pstack-omp` skill, which maps them to omp.
-- agents/comment-sicko.md becomes the hidden skill `pstack-comment-sicko`, which the
-  omp `comment-sicko` agent autoloads.
+- agents/comment-sicko.md becomes the hidden skill `pstack-comment-sicko`, which a
+  `reviewer` spawn reads as its persona.
 """
 
 from __future__ import annotations
@@ -110,7 +110,7 @@ def build(dest: Path) -> list[str]:
     target.mkdir()
     frontmatter = [
         "name: pstack-comment-sicko",
-        "description: Comment Sicko persona from pstack. The omp comment-sicko agent loads it.",
+        "description: Comment Sicko persona from pstack. A reviewer spawn reads it for the no-comments skill.",
         "hide: true",
     ]
     (target / "SKILL.md").write_text(document(frontmatter, body, False))

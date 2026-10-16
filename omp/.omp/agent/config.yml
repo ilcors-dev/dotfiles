@@ -5,8 +5,6 @@ modelRoles:
   task: anthropic/claude-sonnet-5-5:auto
   tiny: openai-codex/gpt-6-luna:auto
   plan: anthropic/claude-opus-5-5:auto
-  pstack-opus: anthropic/claude-opus-5-5:auto
-  pstack-gpt: openai-codex/gpt-6.1-sol:auto
 composer:
   shape: pi
   tokenRate: false
@@ -28,6 +26,8 @@ mnemopi:
   scoping: per-project-tagged
 task:
   enableEffort: true
+  agentModelOverrides:
+    reviewer: openai-codex/gpt-6.1-sol:auto
 skills:
   customDirectories:
     - ~/.local/share/pstack/skills

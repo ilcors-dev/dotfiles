@@ -14,22 +14,23 @@ pstack skills are written for Cursor. Follow each skill as written, and translat
 
 A Cursor `Task` call is one item in an omp `task` call. Several `Task` calls "in one message" are one `task` call with one item per spawn. Each item sets its own `agent`, so a panel of models is one call.
 
-omp sets the model of a subagent through its agent definition, not through a parameter. Choose the agent from three facts in the skill: `subagent_type`, `readonly`, and `model`.
+omp uses only its bundled agents and user-tagged model agents. omp sets the model of a subagent through its agent, not through a parameter. Choose the agent from three facts in the skill: `subagent_type`, `readonly`, and `model`.
 
-| Cursor `subagent_type` | `readonly` | Claude Opus model | GPT model |
+| Cursor `subagent_type` | `readonly` | omp agent | First line of the spawn's `task` |
 |---|---|---|---|
-| `poteto-agent` | any | `poteto-agent-opus` | `poteto-agent` |
-| `generalPurpose` | `false` or not set | `pstack-opus` | `pstack-gpt` |
-| `generalPurpose` | `true` | `pstack-opus-ro` | `pstack-gpt-ro` |
-| `comment-sicko` | any | `comment-sicko` | `comment-sicko` |
+| `poteto-agent` | any | `task` | "Read `skill://pstack-omp` and `skill://poteto-mode` in full before any work. You are a delegate: do not run a playbook." |
+| `generalPurpose` | `false` or not set | `task` | none |
+| `generalPurpose` | `true` | `reviewer` for review, judgment, or a second family; `scout` for cheap exploration | "Do not change files, git state, or external systems." |
+| `comment-sicko` | any | `reviewer` | "Read `skill://pstack-comment-sicko` and follow it as your persona. Report only." |
 
-Read the model from the skill:
+Model families:
 
-- A model slug that starts with `claude-` selects the Claude Opus column. A slug that starts with `grok-`, `gpt-`, or any other family selects the GPT column. omp does not use Grok.
-- `auto`, `inherit-parent`, or no model selects the parent model. Use `task` for a writable spawn and `scout` for a read-only spawn. Use `poteto-agent` for `subagent_type: poteto-agent`.
-- A "same prompt on a different model" second opinion uses the other column.
+- `task` runs on the `task` role, and `scout` on the `smol` role. `reviewer` runs on GPT through `task.agentModelOverrides`. The main session runs on Claude Opus.
+- A panel or a "same prompt on a different model" second opinion that is read-only uses `reviewer` for GPT and `task` with the read-only line for the other family.
+- A panel that writes code on two families (for example `arena` runners) needs the user's model tags. When the user tags models with `^`, omp registers them as agents `m1`, `m2`, and so on, each a writable `task` pinned to its model. Use one tagged agent per family. Without tags, run the writable spawns on `task` and say in the reply that they ran on one family.
+- `grok-` slugs map to GPT. omp does not use Grok.
 
-Reasoning level: the `pstack-opus` and `pstack-gpt` roles use `auto` thinking. When a spawn omits `effort`, omp classifies the child's first prompt and picks its level. The classifier reads only `solutionSpace`, so write it to show how open the problem is, not how large it is. Set `effort` only when the skill tells you to change the level:
+Reasoning level: the spawned agents use `auto` thinking. When a spawn omits `effort`, omp classifies the child's first prompt and picks its level. The classifier reads only `solutionSpace`, so write it to show how open the problem is, not how large it is. Set `effort` only when the skill tells you to change the level:
 
 | pstack instruction | `effort` |
 |---|---|
@@ -38,11 +39,9 @@ Reasoning level: the `pstack-opus` and `pstack-gpt` roles use `auto` thinking. W
 | Lower one step, for judgment | `med` |
 | Lower two or more steps, for routine work | `lo` |
 
-`effort` maps to the lowest, middle, or highest level that the resolved model supports. `task.maxEffort` in `config.yml` caps it. Fast mode (`-fast` slugs) has no per-spawn control in omp. Ignore it.
+`effort` maps to the lowest, middle, or highest level that the resolved model supports. Fast mode (`-fast` slugs) has no per-spawn control in omp. Ignore it.
 
-`~/.cursor/rules/pstack-models.mdc` does not exist in omp. Each skill then uses its own default model. The upstream defaults are Claude Opus 5.5 for judgment, prose, and the hardest code, and Grok 4.7 for other code and exploration. In omp, use the GPT column wherever a skill names Grok. Panels (arena runners, architect runners, interrogate reviewers, arena cross-judge pool) use both families: one spawn per family.
-
-`modelRoles` in `~/.omp/agent/config.yml` sets the real models. `pstack-opus` and `pstack-gpt` are the two roles. Do not change them from a skill. `/setup-pstack` is not available in omp: tell the user to edit `modelRoles` instead.
+`~/.cursor/rules/pstack-models.mdc` does not exist in omp. Each skill then uses its own default model per the rules above. `/setup-pstack` is not available in omp: tell the user to edit `modelRoles` or `task.agentModelOverrides` in `~/.omp/agent/config.yml` instead. Do not change them from a skill.
 
 Other `Task` parameters:
 
@@ -52,7 +51,7 @@ Other `Task` parameters:
 | `environment: "cloud"` | Not available. Run the spawn locally. |
 | Resume a subagent | `write agent://<id>` with the follow-up message. |
 | Readonly mode strips MCP access | omp keeps MCP tools in every agent. Ignore this limit. |
-| `generalPurpose` substituted for `poteto-agent` | Do not do this. `poteto-agent` and `poteto-agent-opus` load `poteto-mode` before their first turn. |
+| `generalPurpose` substituted for `poteto-agent` | Do not do this. Use `task` with the `poteto-agent` first line from the table above. |
 
 ## Tools
 
