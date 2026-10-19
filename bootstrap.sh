@@ -61,8 +61,5 @@ echo "Installing oh-my-pi rtk extension and plugins..."
 "$(brew --prefix)/bin/rtk" init -g --agent omp
 "$OMP" plugin install https://github.com/MasuRii/pi-rtk-optimizer
 
-echo "Installing pstack skills for oh-my-pi..."
-"$(dirname "$0")/executables/src/executables/pstack-sync"
-
 defaults write com.apple.screencapture location /tmp
 killall SystemUIServer

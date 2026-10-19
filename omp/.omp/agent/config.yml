@@ -1,5 +1,5 @@
 modelRoles:
-  advisor: openai-codex/gpt-6.1-sol:auto
+  advisor: anthropic/claude-sonnet-5-5:auto
   default: anthropic/claude-opus-5-5
   commit: openai-codex/gpt-6-luna:auto
   task: anthropic/claude-sonnet-5-5:auto
@@ -24,13 +24,6 @@ memory:
   backend: mnemopi
 mnemopi:
   scoping: per-project-tagged
-task:
-  enableEffort: true
-  agentModelOverrides:
-    reviewer: openai-codex/gpt-6.1-sol:auto
-skills:
-  customDirectories:
-    - ~/.local/share/pstack/skills
 symbolPreset: nerd
 statusLine:
   preset: custom
