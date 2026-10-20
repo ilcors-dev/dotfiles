@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""send-to-kindle: email documents to your Kindle through Gmail SMTP.
+
+Usage:
+  send-to-kindle book.epub
+  send-to-kindle notes.pdf other.docx      # one email, several attachments
+  send-to-kindle --convert paper.pdf       # ask Amazon to reflow the PDF
+
+Reads ~/.config/kindle-email/config.json:
+  {"kindle_email": "...@kindle.com", "from_email": "...", "smtp_user": "...",
+   "smtp_host": "smtp.gmail.com", "smtp_port": 587}
+
+Prompts for the Gmail App Password on every run; it is never stored.
+The sender must be on Amazon's "Approved Personal Document E-mail List".
+"""
+
+from __future__ import annotations
+
+import argparse
+import getpass
+import json
+import mimetypes
+import smtplib
+import ssl
+import sys
+from email.message import EmailMessage
+from pathlib import Path
+
+DEFAULT_CONFIG = Path.home() / ".config" / "kindle-email" / "config.json"
+# Formats accepted by Amazon Send to Kindle by email.
+SUPPORTED = {
+    ".epub", ".pdf", ".doc", ".docx", ".txt", ".rtf", ".htm", ".html",
+    ".png", ".gif", ".jpg", ".jpeg", ".bmp",
+}
+# Gmail SMTP rejects messages over 25 MB *after* base64 encoding (~4/3 growth),
+# which is stricter than Amazon's 50 MB, so check the serialized message.
+MAX_MESSAGE_BYTES = 25 * 1000 * 1000
+
+
+def load_config(path: Path, recipient_override: str | None) -> dict:
+    config = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(config, dict):
+        raise ValueError(f"{path} must contain a JSON object")
+    recipient = str(recipient_override or config.get("kindle_email", "")).strip()
+    sender = str(config.get("from_email", "")).strip()
+    host = str(config.get("smtp_host", "smtp.gmail.com")).strip()
+    port = int(config.get("smtp_port", 587))
+    if not recipient.lower().endswith("@kindle.com") or recipient.count("@") != 1 or not recipient.split("@")[0]:
+        raise ValueError("kindle_email must be an @kindle.com address")
+    if sender.count("@") != 1 or not all(sender.split("@")):
+        raise ValueError("from_email must be an email address")
+    if not host or not 1 <= port <= 65535:
+        raise ValueError("invalid SMTP host or port")
+    return {
+        "recipient": recipient,
+        "sender": sender,
+        "username": str(config.get("smtp_user", "")).strip() or sender,
+        "host": host,
+        "port": port,
+    }
+
+
+def load_files(paths: list[Path]) -> list[tuple[Path, bytes]]:
+    files = []
+    for raw in paths:
+        path = raw.expanduser()
+        if path.suffix.lower() not in SUPPORTED:
+            raise ValueError(f"unsupported format {path.suffix or '(none)'}: {path}")
+        content = path.read_bytes()
+        if path.suffix.lower() == ".pdf" and not content.startswith(b"%PDF-"):
+            raise ValueError(f"not a PDF: {path}")
+        files.append((path, content))
+    return files
+
+
+def check_size(msg: EmailMessage) -> None:
+    size = len(msg.as_bytes())
+    if size > MAX_MESSAGE_BYTES:
+        raise ValueError(
+            f"encoded email is {size / 1e6:.1f} MB; Gmail SMTP limit is 25 MB "
+            "(attachments grow ~37% when encoded). Send fewer or smaller files."
+        )
+
+
+def build_message(cfg: dict, files: list[tuple[Path, bytes]], convert: bool) -> EmailMessage:
+    msg = EmailMessage()
+    msg["From"] = cfg["sender"]
+    msg["To"] = cfg["recipient"]
+    # Subject "convert" makes Amazon reflow PDFs into Kindle format.
+    msg["Subject"] = "convert" if convert else files[0][0].stem
+    msg.set_content("Sent with send-to-kindle.")
+    for path, content in files:
+        mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        maintype, subtype = mime.split("/", 1)
+        msg.add_attachment(content, maintype=maintype, subtype=subtype, filename=path.name)
+    return msg
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Email documents to your Kindle.",
+        epilog=f"Supported: {' '.join(sorted(SUPPORTED))}",
+    )
+    parser.add_argument("files", nargs="+", type=Path, help="Documents to send")
+    parser.add_argument("--convert", action="store_true", help="Ask Amazon to convert PDFs to Kindle format")
+    parser.add_argument("--kindle-config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument("--kindle-email", help="Override the recipient, keeping SMTP settings")
+    args = parser.parse_args()
+
+    try:
+        cfg = load_config(args.kindle_config.expanduser(), args.kindle_email)
+        files = load_files(args.files)
+        msg = build_message(cfg, files, args.convert)
+        check_size(msg)
+
+        if not sys.stdin.isatty():
+            raise ValueError("no TTY for the Gmail App Password prompt; run interactively")
+        password = getpass.getpass(f"Gmail App Password for {cfg['username']}: ").strip().replace(" ", "")
+        if not password:
+            raise ValueError("Gmail App Password is empty")
+        try:
+            with smtplib.SMTP(cfg["host"], cfg["port"], timeout=60) as server:
+                server.ehlo()
+                server.starttls(context=ssl.create_default_context())
+                server.ehlo()
+                server.login(cfg["username"], password)
+                refused = server.send_message(msg)
+                if refused:
+                    raise smtplib.SMTPRecipientsRefused(refused)
+        finally:
+            password = ""
+        names = ", ".join(p.name for p, _ in files)
+        print(f"SMTP accepted {names} for {cfg['recipient']}; Kindle delivery is not yet confirmed.")
+        return 0
+    except smtplib.SMTPAuthenticationError:
+        print(
+            "Send failed: SMTP authentication rejected. Gmail requires an App Password, "
+            "not your account password (Google Account → Security → 2-Step Verification → App passwords).",
+            file=sys.stderr,
+        )
+    except (OSError, ValueError, TypeError, smtplib.SMTPException) as exc:
+        print(f"Send failed: {exc}", file=sys.stderr)
+    except (EOFError, KeyboardInterrupt):
+        print("\nSend cancelled.", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
