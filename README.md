@@ -52,6 +52,8 @@ not tracked: run `/login` after restoring.
 
 Optional private configuration can provide `~/.zsh/local.zsh` and
 `~/.config/local-nvim-work.lua`. The public packages work without them.
+`config.yml` adds `AGENTS.local.md` to `contextFiles.extra`, so an untracked
+`AGENTS.local.md` beside a project `AGENTS.md` loads as extra project guidance.
 
 The default agent executable for the `<leader>o1`, `<leader>o2`, and
 `<leader>o3` terminals is configured in

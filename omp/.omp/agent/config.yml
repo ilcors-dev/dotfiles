@@ -1,5 +1,5 @@
 modelRoles:
-  advisor: anthropic/claude-sonnet-5-5:auto
+  advisor: openai-codex/gpt-6.1-sol:auto
   default: anthropic/claude-opus-5-5
   commit: openai-codex/gpt-6-luna:auto
   task: anthropic/claude-sonnet-5-5:auto
@@ -85,8 +85,14 @@ ask:
 retry:
   fallbackChains:
     advisor:
-      - anthropic/claude-opus-5-5
+      - anthropic/claude-sonnet-5-5
     commit:
       - anthropic/claude-sonnet-5-5
     tiny:
       - anthropic/claude-sonnet-5-5
+disabledExtensions: []
+contextFiles:
+  extra:
+    - AGENTS.local.md
+claudeResets:
+  autoRedeem: "no"
