@@ -188,6 +188,11 @@ local hl = {
 	NeoTreeRootName = { ctermfg = 5, bold = true },
 	NeoTreeDimmed = { ctermfg = 8 },
 	NeoTreeDotfile = { ctermfg = 8 },
+	-- Marks the followed file even when the tree is unfocused. neo-tree only
+	-- copies the GUI background of CursorLine, so give it the panel shade here;
+	-- the light palette has no panel shade, so underline instead.
+	NeoTreeCursorLine = dark and { ctermbg = 0, bold = true } or { underline = true, bold = true },
+	NeoTreeActiveFile = { ctermfg = 3, bold = true },
 }
 
 for name, attrs in pairs(hl) do
